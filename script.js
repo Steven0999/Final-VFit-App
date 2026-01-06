@@ -1,4 +1,4 @@
-// --- DATA & STATE ---
+/*// --- DATA & STATE ---
 const EXERCISE_DB = [
     { name: "Barbell Bench Press", focus: ["Full Body", "Upper Body", "Push"], equipment: "barbell", muscles: ["Chest", "Triceps", "Shoulders"] },
     { name: "Dumbbell Press", focus: ["Full Body", "Upper Body", "Push"], equipment: "dumbbell", muscles: ["Chest", "Triceps"] },
@@ -635,4 +635,234 @@ function initEquipmentSettings() {
 function toggleEquip(env, key) { state.equipment[env][key] = !state.equipment[env][key]; saveState(); initEquipmentSettings(); }
 
 function resetData() { if(confirm("Permanently clear all data? This cannot be undone.")) { localStorage.clear(); location.reload(); } }
-function closeEditModal() { document.getElementById('edit-modal').style.display = 'none'; }
+function closeEditModal() { document.getElementById('edit-modal').style.display = 'none'; } */
+
+// ================== GLOBAL VARIABLES ==================
+let userData = {
+  xp: 0,
+  level: 1,
+  tier: 'Beginner',
+  streak: 0,
+  workoutsCompleted: 0,
+  nutritionLogged: 0,
+  quizzesCompleted: 0,
+  achievements: [],
+  badges: [],
+  communityPoints: 0
+};
+
+const achievementsData = [
+  // Bronze (50)
+  ...Array.from({length:50}, (_, i) => ({id:`bronze${i+1}`, name:`Bronze Achievement ${i+1}`, xp:10, tier:'bronze'})),
+  // Silver (25)
+  ...Array.from({length:25}, (_, i) => ({id:`silver${i+1}`, name:`Silver Achievement ${i+1}`, xp:25, tier:'silver'})),
+  // Gold (15)
+  ...Array.from({length:15}, (_, i) => ({id:`gold${i+1}`, name:`Gold Achievement ${i+1}`, xp:50, tier:'gold'})),
+  // Platinum (8)
+  ...Array.from({length:8}, (_, i) => ({id:`platinum${i+1}`, name:`Platinum Achievement ${i+1}`, xp:100, tier:'platinum'})),
+  // Lifetime (2)
+  ...Array.from({length:2}, (_, i) => ({id:`lifetime${i+1}`, name:`Lifetime Achievement ${i+1}`, xp:500, tier:'lifetime'}))
+];
+
+const badgesData = [
+  {id:'community', name:'Community Helper'},
+  {id:'coach', name:'Coach Badge'},
+  {id:'gym', name:'Gym Enthusiast'},
+  {id:'committed', name:'Committed Badge'}
+];
+
+// ================== DOM ELEMENTS ==================
+const xpElem = document.getElementById('xp');
+const levelElem = document.getElementById('level');
+const tierElem = document.getElementById('tier');
+const achievementsList = document.getElementById('achievements-list');
+const badgesList = document.getElementById('badges-list');
+const toastContainer = document.getElementById('toast-container');
+const workoutsList = document.getElementById('workouts-list');
+const quizContainer = document.getElementById('quiz-container');
+const streakElem = document.getElementById('streak');
+
+// ================== UTILITY FUNCTIONS ==================
+function showToast(message) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerText = message;
+  toastContainer.appendChild(toast);
+  setTimeout(()=> toast.remove(), 3000);
+}
+
+function saveData() {
+  localStorage.setItem('fittrackProData', JSON.stringify(userData));
+}
+
+function loadData() {
+  const data = JSON.parse(localStorage.getItem('fittrackProData'));
+  if(data) userData = data;
+  updateUI();
+}
+
+// ================== LEVEL & XP SYSTEM ==================
+function addXP(amount) {
+  userData.xp += amount;
+  showToast(`+${amount} XP`);
+  checkLevelUp();
+  saveData();
+  updateUI();
+}
+
+function checkLevelUp() {
+  const xpThreshold = userData.level * 100;
+  if(userData.xp >= xpThreshold) {
+    userData.level++;
+    userData.xp -= xpThreshold;
+    showToast(`Level Up! You are now Level ${userData.level}`);
+    updateTier();
+  }
+}
+
+function updateTier() {
+  if(userData.level < 5) userData.tier = 'Beginner';
+  else if(userData.level < 10) userData.tier = 'Intermediate';
+  else if(userData.level < 20) userData.tier = 'Advanced';
+  else userData.tier = 'Expert';
+}
+
+// ================== ACHIEVEMENTS ==================
+function unlockAchievement(id) {
+  if(userData.achievements.includes(id)) return;
+  const achievement = achievementsData.find(a => a.id === id);
+  if(!achievement) return;
+  userData.achievements.push(id);
+  addXP(achievement.xp);
+  renderAchievements();
+  showToast(`Achievement Unlocked: ${achievement.name}`);
+}
+
+function renderAchievements() {
+  achievementsList.innerHTML = '';
+  userData.achievements.forEach(id => {
+    const a = achievementsData.find(a => a.id === id);
+    const div = document.createElement('div');
+    div.className = `achievement ${a.tier}`;
+    div.innerText = a.name;
+    achievementsList.appendChild(div);
+  });
+}
+
+// ================== BADGES ==================
+function earnBadge(id) {
+  if(userData.badges.includes(id)) return;
+  const badge = badgesData.find(b => b.id === id);
+  if(!badge) return;
+  userData.badges.push(id);
+  renderBadges();
+  showToast(`Badge Earned: ${badge.name}`);
+}
+
+function renderBadges() {
+  badgesList.innerHTML = '';
+  userData.badges.forEach(id => {
+    const badge = badgesData.find(b => b.id === id);
+    const div = document.createElement('div');
+    div.className = 'badge';
+    div.innerText = badge.name;
+    badgesList.appendChild(div);
+  });
+}
+
+// ================== WORKOUTS ==================
+const workoutsData = [
+  {id:'w1', name:'Full Body Beginner', intensity:'low', volume:3},
+  {id:'w2', name:'Upper Body Strength', intensity:'medium', volume:4},
+  {id:'w3', name:'Lower Body Strength', intensity:'medium', volume:4},
+  {id:'w4', name:'HIIT Cardio', intensity:'high', volume:5},
+  {id:'w5', name:'Mobility & Stretching', intensity:'low', volume:2}
+];
+
+function renderWorkouts() {
+  workoutsList.innerHTML = '';
+  workoutsData.forEach(w => {
+    const div = document.createElement('div');
+    div.className = 'workout-item';
+    div.innerHTML = `
+      <strong>${w.name}</strong>
+      <p>Intensity: ${w.intensity}, Volume: ${w.volume}</p>
+      <button onclick="completeWorkout('${w.id}')">Complete Workout</button>
+    `;
+    workoutsList.appendChild(div);
+  });
+}
+
+function completeWorkout(id) {
+  const workout = workoutsData.find(w => w.id === id);
+  if(!workout) return;
+  userData.workoutsCompleted++;
+  userData.streak++;
+  addXP(workout.volume * 10);
+  showToast(`Workout Completed: ${workout.name}`);
+  streakElem.innerText = userData.streak;
+  saveData();
+}
+
+// ================== NUTRITION ==================
+const nutritionLog = [];
+
+function logNutrition(item, calories) {
+  nutritionLog.push({item, calories, date: new Date()});
+  userData.nutritionLogged++;
+  addXP(5);
+  showToast(`Nutrition Logged: ${item}`);
+  saveData();
+}
+
+// ================== QUIZZES / EDUCATION ==================
+const quizzes = [
+  {question:'What is the main muscle worked in a squat?', options:['Quads','Biceps','Traps'], answer:'Quads'},
+  {question:'How many reps are optimal for strength?', options:['1-5','6-12','15-20'], answer:'1-5'}
+];
+
+let currentQuizIndex = 0;
+
+function renderQuiz() {
+  if(currentQuizIndex >= quizzes.length) {
+    quizContainer.innerHTML = `<p>Quiz Completed!</p>`;
+    userData.quizzesCompleted++;
+    addXP(50);
+    return;
+  }
+  const q = quizzes[currentQuizIndex];
+  quizContainer.innerHTML = `<p>${q.question}</p>`;
+  q.options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.innerText = opt;
+    btn.onclick = ()=> checkQuizAnswer(opt);
+    quizContainer.appendChild(btn);
+  });
+}
+
+function checkQuizAnswer(selected) {
+  const q = quizzes[currentQuizIndex];
+  if(selected === q.answer) {
+    showToast('Correct Answer!');
+    addXP(20);
+  } else {
+    showToast('Wrong Answer!');
+  }
+  currentQuizIndex++;
+  renderQuiz();
+}
+
+// ================== UPDATE UI ==================
+function updateUI() {
+  xpElem.innerText = userData.xp;
+  levelElem.innerText = userData.level;
+  tierElem.innerText = userData.tier;
+  streakElem.innerText = userData.streak;
+  renderAchievements();
+  renderBadges();
+  renderWorkouts();
+}
+
+// ================== INITIAL LOAD ==================
+loadData();
+renderQuiz();
