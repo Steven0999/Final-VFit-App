@@ -1,201 +1,190 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FitTrack Pro V9</title>
-<link rel="stylesheet" href="style.css">
-<script src="https://unpkg.com/lucide/dist/lucide.js"></script>
-<style>
-body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f4f6f8;color:#111;}
-.app-header{display:flex;flex-direction:column;align-items:center;padding:10px;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,0.1);}
-.nav-bar{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;}
-.nav-item{padding:8px 16px;border:none;background:#e1e5eb;border-radius:8px;cursor:pointer;}
-.nav-item.active{background:#4caf50;color:white;}
-.tab-content{display:none;padding:20px;}
-.tab-content.active{display:block;}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;}
-.stats div{background:rgba(255,255,255,0.7);padding:10px;border-radius:10px;text-align:center;}
-.dashboard-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;}
-button{padding:8px 12px;border:none;border-radius:6px;background:#4caf50;color:#fff;cursor:pointer;}
-button:hover{background:#45a049;}
-.hidden{display:none;}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:10px;}
-.checkbox-group{display:flex;gap:20px;margin:10px 0;}
-.equipment-selection button{margin-right:10px;}
-.modal{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;}
-.modal .modal-content{background:white;padding:20px;border-radius:12px;width:90%;max-width:500px;max-height:90%;overflow-y:auto;}
-.photo-upload img{width:100px;height:100px;object-fit:cover;margin-right:10px;margin-bottom:10px;border-radius:8px;border:1px solid #ccc;}
-input, select{padding:6px;border-radius:6px;border:1px solid #ccc;margin-bottom:8px;width:100%;}
-.tab-selector{display:flex;gap:10px;margin-bottom:10px;}
-.tab-selector button{flex:1;}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitTrack Pro V9</title>
+
+  <!-- Core Styles -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide/dist/lucide.js"></script>
 </head>
+
 <body>
 
-<!-- ==================== NAVIGATION ==================== -->
+<!-- ==================================================
+     HEADER & NAVIGATION
+================================================== -->
 <header class="app-header">
   <h1>FitTrack Pro V9</h1>
+
   <nav class="nav-bar">
-    <button class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
-    <button class="nav-item" data-tab="history" onclick="switchTab('history')">History</button>
-    <button class="nav-item" data-tab="nutrition" onclick="switchTab('nutrition')">Nutrition</button>
-    <button class="nav-item" data-tab="metrics" onclick="switchTab('metrics')">Metrics</button>
-    <button class="nav-item" data-tab="achievements" onclick="switchTab('achievements')">Gamification</button>
+    <button class="nav-item active" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="nav-item" onclick="switchTab('workout-setup')">Workout</button>
+    <button class="nav-item" onclick="switchTab('nutrition')">Nutrition</button>
+    <button class="nav-item" onclick="switchTab('metrics')">Metrics</button>
+    <button class="nav-item" onclick="switchTab('achievements')">Gamification</button>
   </nav>
 </header>
 
-<!-- ==================== DASHBOARD ==================== -->
+<!-- ==================================================
+     DASHBOARD
+================================================== -->
 <section id="dashboard" class="tab-content active">
   <h2>Dashboard</h2>
+
   <div class="stats">
-    <div>Calories: <span id="dash-calories">0</span></div>
-    <div>Protein: <span id="dash-protein">0g</span></div>
-    <div>Carbs: <span id="dash-carbs">0g</span></div>
-    <div>Fat: <span id="dash-fat">0g</span></div>
-    <div>Water: <span id="water-count">0L</span></div>
-    <div>Tier: <span id="user-tier">Beginner</span></div>
-    <div>XP: <span id="user-xp">0</span></div>
-    <div>Streak: <span id="user-streak">0</span> days</div>
-  </div>
-  <div class="dashboard-actions">
-    <button onclick="startManualWorkout()">Start Workout</button>
-    <button onclick="generateAIWorkout()" id="ai-workout-btn">AI Workout</button>
-    <button onclick="openMealModal()">Build a Meal</button>
-    <button onclick="openTutorial()">Tutorials</button>
-    <button onclick="viewProgressCharts()">Progress Charts</button>
-    <button onclick="openSettings()">Settings</button>
+    <div>Calories<br><strong id="dash-calories">0</strong></div>
+    <div>Protein<br><strong id="dash-protein">0g</strong></div>
+    <div>Carbs<br><strong id="dash-carbs">0g</strong></div>
+    <div>Fat<br><strong id="dash-fat">0g</strong></div>
+    <div>Water<br><strong id="water-count">0L</strong></div>
+    <div>Tier<br><strong id="user-tier">Beginner</strong></div>
+    <div>XP<br><strong id="user-xp">0</strong></div>
+    <div>Streak<br><strong id="user-streak">0</strong> days</div>
   </div>
 
-  <!-- Extra dashboard widgets repeated for realistic HTML length -->
-  <div class="stats">
-    <div>Sleep: <span id="dash-sleep">0h</span></div>
-    <div>Heart Rate: <span id="dash-hr">0 bpm</span></div>
-    <div>Steps: <span id="dash-steps">0</span></div>
-    <div>Calories Burned: <span id="dash-burned">0</span></div>
-    <div>Last Workout: <span id="dash-last-workout">None</span></div>
-    <div>Next Workout: <span id="dash-next-workout">None</span></div>
-    <div>Weekly Avg Calories: <span id="dash-week-cals">0</span></div>
-    <div>Weekly Avg Protein: <span id="dash-week-protein">0g</span></div>
+  <div class="dashboard-actions">
+    <button onclick="startManualWorkout()">Start Workout</button>
+    <button onclick="generateAIWorkout()">AI Workout</button>
+    <button onclick="openMealModal()">Build Meal</button>
+    <button onclick="openTutorial()">Tutorials</button>
   </div>
 </section>
 
-<!-- ==================== WORKOUT SETUP ==================== -->
-<section id="workout-setup" class="tab-content hidden">
+<!-- ==================================================
+     WORKOUT SETUP
+================================================== -->
+<section id="workout-setup" class="tab-content">
   <h2>Workout Setup</h2>
-  <label for="workout-date-input">Date:</label>
-  <input type="date" id="workout-date-input">
-  <label for="workout-focus">Focus:</label>
+
+  <label>Date</label>
+  <input type="date" id="workout-date-input" />
+
+  <label>Workout Focus</label>
   <select id="workout-focus" onchange="toggleSpecificMuscleGrid()">
     <option>Full Body</option>
     <option>Upper Body</option>
     <option>Lower Body/Legs</option>
     <option>Specific Muscle</option>
   </select>
+
   <div id="muscle-selection-container" class="hidden">
     <h4>Select Muscles</h4>
-    <div id="muscle-selection-grid" class="grid">
-      <button>Chest</button><button>Back</button><button>Legs</button>
-      <button>Arms</button><button>Shoulders</button><button>Core</button>
-      <button>Biceps</button><button>Triceps</button><button>Glutes</button>
-    </div>
+    <div id="muscle-selection-grid" class="core-input-grid"></div>
   </div>
 
-  <div class="checkbox-group">
-    <label><input type="checkbox" id="add-core-check"> Add Core Finisher</label>
-    <label><input type="checkbox" id="add-cardio-check" onchange="toggleCardioOptions()"> Add Cardio</label>
-  </div>
+  <label>
+    <input type="checkbox" id="add-core-check" />
+    Add Core Finisher
+  </label>
+
+  <label>
+    <input type="checkbox" id="add-cardio-check" onchange="toggleCardioOptions()" />
+    Add Cardio
+  </label>
+
   <div id="cardio-options" class="hidden">
-    <label>Cardio Type:</label>
-    <select id="cardio-type"><option>Run</option><option>Bike</option></select>
-    <label>Exercise:</label>
-    <select id="cardio-exercise"><option>Treadmill</option><option>Stationary Bike</option></select>
-    <label>Duration (min):</label>
-    <input type="number" id="cardio-duration" min="5" max="120" value="20">
+    <label>Cardio Type</label>
+    <select id="cardio-type">
+      <option>Run</option>
+      <option>Bike</option>
+    </select>
+
+    <label>Exercise</label>
+    <select id="cardio-exercise">
+      <option>Treadmill</option>
+      <option>Stationary Bike</option>
+    </select>
   </div>
 
-  <div class="equipment-selection">
-    <h4>Environment:</h4>
-    <button id="env-tab-gym" onclick="setWorkoutEnv('gym')">Gym</button>
-    <button id="env-tab-home" onclick="setWorkoutEnv('home')">Home</button>
+  <div class="dashboard-actions">
+    <button onclick="setWorkoutEnv('gym')">Gym</button>
+    <button onclick="setWorkoutEnv('home')">Home</button>
   </div>
-  <div id="exercise-addition-grid" class="grid"></div>
+
   <button onclick="startManualWorkout()">Start Workout</button>
 </section>
 
-<!-- ==================== WORKOUT ACTIVE ==================== -->
-<section id="workout-active" class="tab-content hidden">
-  <h2>Active Workout: <span id="active-workout-title"></span></h2>
-  <div>Timer: <span id="workout-timer">00:00:00</span></div>
+<!-- ==================================================
+     WORKOUT ACTIVE
+================================================== -->
+<section id="workout-active" class="tab-content">
+  <h2>
+    Active Workout:
+    <span id="active-workout-title"></span>
+  </h2>
+
+  <div>Timer: <strong id="workout-timer">00:00:00</strong></div>
+
   <div id="exercise-list"></div>
   <div id="extra-active-section"></div>
+
   <button onclick="saveWorkout()">Save Workout</button>
-  <button onclick="cancelWorkout()">Cancel Workout</button>
-  <!-- Extended placeholders to reach length -->
-  <div id="workout-notes">
-    <textarea placeholder="Add notes for this workout" rows="3"></textarea>
-  </div>
+  <button onclick="cancelWorkout()">Cancel</button>
 </section>
 
-<!-- ==================== NUTRITION ==================== -->
-<section id="nutrition" class="tab-content hidden">
+<!-- ==================================================
+     NUTRITION
+================================================== -->
+<section id="nutrition" class="tab-content">
   <div class="tab-selector">
-    <button id="nut-tab-log" onclick="setNutritionTab('log')">Log</button>
-    <button id="nut-tab-db" onclick="setNutritionTab('database')">Database</button>
-    <button id="nut-tab-meals" onclick="setNutritionTab('meals')">Saved Meals</button>
+    <button onclick="setNutritionTab('log')">Log</button>
+    <button onclick="setNutritionTab('database')">Database</button>
   </div>
 
+  <!-- LOG -->
   <div id="nut-view-log">
-    <input type="text" placeholder="Search Food..." oninput="handleFoodSearch(this.value)">
+    <input
+      type="text"
+      placeholder="Search Food..."
+      oninput="handleFoodSearch(this.value)"
+    />
     <div id="food-results"></div>
     <div id="daily-log-list"></div>
+
     <div id="daily-totals-card" class="hidden">
-      <span id="total-day-cals">0 Kcal</span>
+      <span id="total-day-cals">0 kcal</span>
       <span id="total-day-prot">0g Protein</span>
-      <span id="total-day-carb">0g Carbs</span>
-      <span id="total-day-fat">0g Fat</span>
       <button onclick="archiveDailyNutrition()">Archive Day</button>
     </div>
   </div>
 
+  <!-- DATABASE -->
   <div id="nut-view-db" class="hidden">
     <div id="custom-db-list"></div>
-    <input type="text" id="form-name" placeholder="Food Name">
-    <input type="number" id="form-cals" placeholder="Calories">
-    <input type="number" id="form-prot" placeholder="Protein">
-    <input type="number" id="form-carb" placeholder="Carbs">
-    <input type="number" id="form-fat" placeholder="Fat">
+
+    <input id="form-name" placeholder="Food name" />
+    <input id="form-cals" type="number" placeholder="Calories" />
+    <input id="form-prot" type="number" placeholder="Protein" />
+
     <button onclick="saveToDatabase()">Add Food</button>
     <button onclick="startScanner('db')">Scan Barcode</button>
   </div>
-
-  <div id="nut-view-meals" class="hidden">
-    <div id="saved-meals-list"></div>
-    <button onclick="importMealToLog()">Log Meal</button>
-  </div>
 </section>
 
-<!-- ==================== METRICS ==================== -->
-<section id="metrics" class="tab-content hidden">
+<!-- ==================================================
+     METRICS
+================================================== -->
+<section id="metrics" class="tab-content">
   <div class="tab-selector">
-    <button id="metrics-tab-checkin" onclick="setMetricsTab('checkin')">Check-in</button>
-    <button id="metrics-tab-logs" onclick="setMetricsTab('logs')">Logs</button>
+    <button onclick="setMetricsTab('checkin')">Check-in</button>
+    <button onclick="setMetricsTab('logs')">Logs</button>
   </div>
 
   <div id="metrics-view-checkin">
-    <input type="number" id="body-weight" placeholder="Weight kg">
-    <input type="number" id="m-waist" placeholder="Waist cm">
-    <input type="number" id="m-hips" placeholder="Hips cm">
-    <input type="number" id="m-thighs" placeholder="Thighs cm">
+    <input id="body-weight" type="number" placeholder="Weight (kg)" />
+    <input id="m-waist" type="number" placeholder="Waist (cm)" />
+
     <div class="photo-upload">
-      <img id="img-front" class="hidden"><button onclick="triggerPhoto('front')">Front</button>
-      <img id="img-side" class="hidden"><button onclick="triggerPhoto('side')">Side</button>
-      <img id="img-back" class="hidden"><button onclick="triggerPhoto('back')">Back</button>
-      <input type="file" id="photo-input" class="hidden" accept="image/*">
+      <button onclick="triggerPhoto('front')">Front</button>
+      <button onclick="triggerPhoto('side')">Side</button>
+      <button onclick="triggerPhoto('back')">Back</button>
+      <input id="photo-input" type="file" class="hidden" accept="image/*" />
     </div>
-    <textarea id="metric-notes" placeholder="Notes..." rows="3"></textarea>
+
     <button onclick="saveMetrics()">Save Metrics</button>
   </div>
 
@@ -204,85 +193,82 @@ input, select{padding:6px;border-radius:6px;border:1px solid #ccc;margin-bottom:
   </div>
 </section>
 
-<!-- ==================== ACHIEVEMENTS & GAMIFICATION ==================== -->
-<section id="achievements" class="tab-content hidden">
-  <h2>Achievements & Badges</h2>
-  <div id="achievements-list">
-    <div class="achievement-card">First Workout</div>
-    <div class="achievement-card">7-Day Streak</div>
-    <div class="achievement-card">10 Workouts Completed</div>
-    <div class="achievement-card">Meal Logged</div>
-    <div class="achievement-card">Protein Goal Achieved</div>
-    <div class="achievement-card locked">AI Workout Completed</div>
-    <div class="achievement-card locked">100 Workouts</div>
-    <div class="achievement-card locked">Body Transformation</div>
-  </div>
-  <div id="badges-list">
-    <div class="badge-card">Bronze Tier</div>
-    <div class="badge-card">Silver Tier</div>
-    <div class="badge-card">Gold Tier</div>
-    <div class="badge-card">Platinum Tier</div>
-  </div>
+<!-- ==================================================
+     GAMIFICATION
+================================================== -->
+<section id="achievements" class="tab-content">
+  <h2>Achievements</h2>
+  <div id="achievements-list"></div>
+
+  <h3>Badges</h3>
+  <div id="badges-list"></div>
 </section>
 
-<!-- ==================== MODALS ==================== -->
+<!-- ==================================================
+     MODALS
+================================================== -->
+
+<!-- Meal Builder -->
 <div id="meal-modal" class="modal hidden">
-  <div class="modal-content">
+  <div>
     <h3>Meal Builder</h3>
-    <input type="text" id="meal-builder-name" placeholder="Meal Name">
-    <input type="text" id="meal-item-search" oninput="handleMealSearch(this.value)" placeholder="Search Ingredients">
-    <div id="meal-search-results" class="hidden"></div>
+
+    <input id="meal-builder-name" placeholder="Meal Name" />
+    <input
+      placeholder="Search ingredients"
+      oninput="handleMealSearch(this.value)"
+    />
+
+    <div id="meal-search-results"></div>
     <div id="meal-builder-list"></div>
-    <div id="meal-totals">
-      <span id="meal-builder-stats">0 Kcal • 0g Protein</span>
-      <button onclick="saveMealToInventory()">Save Meal</button>
-    </div>
+
+    <div id="meal-builder-stats">0 kcal • 0g Protein</div>
+
+    <button onclick="saveMealToInventory()">Save Meal</button>
     <button onclick="closeMealModal()">Close</button>
   </div>
 </div>
 
-<div id="tutorial-modal" class="modal hidden">
-  <div class="modal-content">
-    <h3>Tutorials</h3>
-    <div id="tutorial-list">
-      <div>Tutorial 1: Basics of Workout</div>
-      <div>Tutorial 2: Nutrition Essentials</div>
-      <div>Tutorial 3: Advanced Training</div>
-      <div>Tutorial 4: AI Workouts</div>
-      <div>Tutorial 5: Tracking Progress</div>
-      <div>Tutorial 6: Gamification</div>
-      <div>Tutorial 7: Equipment Usage</div>
-      <div>Tutorial 8: Meal Planning</div>
-      <div>Tutorial 9: Metrics and Photos</div>
-      <div>Tutorial 10: Community & Sharing</div>
-    </div>
-    <button onclick="closeTutorial()">Close</button>
-  </div>
-</div>
-
+<!-- Portion -->
 <div id="portion-modal" class="modal hidden">
-  <div class="modal-content">
-    <h3>Portion</h3>
-    <span id="portion-item-name"></span>
-    <input type="number" id="portion-qty-input" value="1">
+  <div>
+    <h3 id="portion-item-name"></h3>
+
+    <input id="portion-qty-input" type="number" value="1" />
+
     <div>
-      <button onclick="adjustPortionQty(-1)">-</button>
+      <button onclick="adjustPortionQty(-1)">−</button>
       <button onclick="adjustPortionQty(1)">+</button>
-      <button id="p-mode-packet" onclick="setPortionMode('packet')">Unit</button>
-      <button id="p-mode-custom" onclick="setPortionMode('grams')">Grams</button>
+      <button onclick="setPortionMode('unit')">Unit</button>
+      <button onclick="setPortionMode('grams')">Grams</button>
     </div>
+
     <button onclick="confirmLogPortion()">Confirm</button>
   </div>
 </div>
 
+<!-- Tutorial -->
+<div id="tutorial-modal" class="modal hidden">
+  <div>
+    <h3>Tutorials</h3>
+    <div id="tutorial-list"></div>
+    <button onclick="closeTutorial()">Close</button>
+  </div>
+</div>
+
+<!-- Scanner -->
 <div id="scanner-container" class="modal hidden">
-  <div class="modal-content">
+  <div>
     <h3>Scanner</h3>
     <div id="scanner-mount"></div>
     <button onclick="stopScanner()">Close</button>
   </div>
 </div>
 
+<!-- ==================================================
+     SCRIPT
+================================================== -->
 <script src="script.js"></script>
+
 </body>
 </html>
