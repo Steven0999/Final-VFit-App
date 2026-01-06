@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+/*@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 :root {
     --brand-primary: #4f46e5;
@@ -140,4 +140,237 @@ body {
 .search-results-container {
     position: relative;
     z-index: 60;
+}*/
+/* ================== GLOBAL ================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+body {
+  background-color: #f4f6f8;
+  color: #222;
+  min-height: 100vh;
+}
+
+/* ================== HEADER / NAV ================== */
+.app-header {
+  background-color: #1e1f28;
+  color: #fff;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.nav-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.nav-item {
+  background: #32333b;
+  border: none;
+  color: #fff;
+  padding: 8px 15px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: 0.2s;
+}
+
+.nav-item:hover,
+.nav-item.active {
+  background: #4e4f57;
+}
+
+/* ================== TABS ================== */
+.tab-content {
+  padding: 20px;
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* ================== BUTTONS ================== */
+button {
+  cursor: pointer;
+  padding: 8px 15px;
+  border: none;
+  border-radius: 8px;
+  background-color: #4e4f57;
+  color: #fff;
+  margin: 5px 0;
+  transition: 0.2s;
+}
+
+button:hover {
+  background-color: #6a6b74;
+}
+
+button:disabled {
+  background-color: #999;
+  cursor: not-allowed;
+}
+
+/* ================== DASHBOARD ================== */
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.stats div {
+  background: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  flex: 1 1 150px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.dashboard-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+/* ================== WORKOUTS ================== */
+.checkbox-group label {
+  display: block;
+  margin: 10px 0;
+}
+
+.equipment-selection button {
+  margin: 5px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 5px;
+}
+
+.hidden {
+  display: none;
+}
+
+/* ================== MODALS ================== */
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  z-index: 999;
+  padding: 20px;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.modal h3 {
+  margin-bottom: 10px;
+}
+
+/* ================== NUTRITION ================== */
+.tab-selector button {
+  padding: 5px 10px;
+  margin: 5px;
+}
+
+input, select {
+  padding: 5px;
+  margin: 5px 0;
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* ================== METRICS ================== */
+.photo-upload {
+  display: flex;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.photo-upload img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* ================== ACHIEVEMENTS ================== */
+#achievements-list,
+#badges-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 10px;
+}
+
+.achievement {
+  background: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.achievement.bronze { border-top: 4px solid #cd7f32; }
+.achievement.silver { border-top: 4px solid #c0c0c0; }
+.achievement.gold { border-top: 4px solid #ffd700; }
+.achievement.platinum { border-top: 4px solid #e5e4e2; }
+.achievement.lifetime { border-top: 4px solid #ff4500; }
+
+/* ================== BADGES ================== */
+.badge {
+  background: #f0f0f0;
+  padding: 5px;
+  border-radius: 6px;
+  text-align: center;
+}
+
+/* ================== TOASTS / NOTIFICATIONS ================== */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #32333b;
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 8px;
+  opacity: 0.9;
+  z-index: 1000;
+  transition: 0.3s;
+}
+
+/* ================== LEVEL TIERS ================== */
+.tier {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-weight: bold;
+}
+
+.tier.beginner { background: #a0a0a0; color: #fff; }
+.tier.intermediate { background: #4e9af1; color: #fff; }
+.tier.advanced { background: #f1a14e; color: #fff; }
+.tier.expert { background: #9b59b6; color: #fff; }
+
+/* ================== RESPONSIVE ================== */
+@media (max-width: 768px) {
+  .stats {
+    flex-direction: column;
+  }
+  .dashboard-actions {
+    flex-direction: column;
+  }
 }
