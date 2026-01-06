@@ -332,3 +332,263 @@ button {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+/* =========================================================
+   FINAL UI POLISH — FITTRACK PRO V9
+   Append-only (Safe)
+========================================================= */
+
+/* ---------- GLOBAL REFINEMENTS ---------- */
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  background: #0e0f13;
+  color: #f2f2f2;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.tab-content {
+  padding: 18px;
+  animation: fadeIn 0.25s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- HEADER / NAV ---------- */
+
+.app-header {
+  background: linear-gradient(135deg, #15161c, #1b1d25);
+  border-bottom: 1px solid #242634;
+  padding: 12px;
+}
+
+.nav-bar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.nav-item {
+  background: #1f2230;
+  color: #cfd2ff;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-item:hover {
+  background: #2b2f45;
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, #5865f2, #6d7cff);
+  color: #fff;
+  box-shadow: 0 0 0 1px rgba(88,101,242,0.6);
+}
+
+/* ---------- BUTTON SYSTEM ---------- */
+
+button {
+  background: linear-gradient(135deg, #5865f2, #6d7cff);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s;
+}
+
+button:hover {
+  box-shadow: 0 8px 18px rgba(88,101,242,0.35);
+}
+
+button:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+button.secondary {
+  background: #2a2d3d;
+}
+
+/* ---------- FORMS ---------- */
+
+input,
+select {
+  width: 100%;
+  background: #1b1e2a;
+  color: #fff;
+  border: 1px solid #2d3146;
+  border-radius: 10px;
+  padding: 10px;
+  margin: 6px 0 14px;
+  font-size: 15px;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #5865f2;
+  box-shadow: 0 0 0 1px rgba(88,101,242,0.5);
+}
+
+/* ---------- DASHBOARD ---------- */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.stats-grid div {
+  background: #1c1f2b;
+  padding: 14px;
+  border-radius: 14px;
+  text-align: center;
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px #2a2d3f;
+}
+
+.dashboard-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+/* ---------- WORKOUT ---------- */
+
+#exercise-list > div {
+  background: #1b1e2a;
+  padding: 14px;
+  border-radius: 14px;
+  margin-bottom: 12px;
+  border-left: 4px solid #5865f2;
+}
+
+/* ---------- TABS (INNER) ---------- */
+
+.tab-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tab-selector button {
+  flex: 1;
+  background: #2a2d3d;
+}
+
+.tab-selector button.active {
+  background: linear-gradient(135deg, #5865f2, #6d7cff);
+}
+
+/* ---------- HISTORY ---------- */
+
+#history-list > div {
+  background: #1c1f2b;
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+/* ---------- NUTRITION ---------- */
+
+#food-results div,
+#daily-log-list div,
+#custom-db-list div {
+  background: #1b1e2a;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+#food-results div:hover {
+  background: #262a3c;
+}
+
+#daily-totals-card {
+  background: #202437;
+  padding: 14px;
+  border-radius: 14px;
+  margin-top: 12px;
+}
+
+/* ---------- METRICS ---------- */
+
+.photo-upload img {
+  width: 100%;
+  border-radius: 14px;
+  margin-bottom: 10px;
+  border: 1px solid #2a2d3f;
+}
+
+/* ---------- ACHIEVEMENTS ---------- */
+
+#achievements-list div,
+#badges-list div {
+  background: #1b1e2a;
+  padding: 14px;
+  border-radius: 12px;
+  margin-bottom: 10px;
+  border-left: 4px solid gold;
+}
+
+/* ---------- MODALS ---------- */
+
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,12,18,0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal > * {
+  background: #151827;
+  padding: 18px;
+  border-radius: 16px;
+  width: 92%;
+  max-width: 420px;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+/* ---------- SCANNER ---------- */
+
+#scanner-mount {
+  width: 100%;
+  height: 240px;
+  background: #000;
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+/* ---------- RESPONSIVE ---------- */
+
+@media (min-width: 768px) {
+  .tab-content {
+    max-width: 900px;
+    margin: auto;
+  }
+}
