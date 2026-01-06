@@ -1,406 +1,1324 @@
-// --- DATA & STATE ---
+/*****************************************************
+ * FITTRACK PRO V9
+ * PART 1 / 5 — CORE FOUNDATION
+ * -----------------------------------
+ * - App State
+ * - Persistence
+ * - Navigation
+ * - User Profile
+ * - XP & Level Core
+ * - Dashboard Base
+ *****************************************************/
 
-const EXERCISE_DB = [
-    { name: "Barbell Bench Press", focus: ["Full Body", "Upper Body", "Push"], equipment: "barbell", muscles: ["Chest", "Triceps", "Shoulders"] },
-    { name: "Dumbbell Press", focus: ["Full Body", "Upper Body", "Push"], equipment: "dumbbell", muscles: ["Chest", "Triceps"] },
-    { name: "Incline Barbell Press", focus: ["Upper Body", "Push"], equipment: "barbell", muscles: ["Chest", "Shoulders"] },
-    { name: "Pull Ups", focus: ["Full Body", "Upper Body", "Pull"], equipment: "bodyweight", muscles: ["Back", "Biceps"] },
-    { name: "Lat Pulldowns", focus: ["Upper Body", "Pull"], equipment: "cable", muscles: ["Back", "Biceps"] },
-    { name: "Barbell Rows", focus: ["Full Body", "Upper Body", "Pull"], equipment: "barbell", muscles: ["Back", "Biceps"] },
-    { name: "Barbell Squats", focus: ["Full Body", "Lower Body/Legs", "Squat"], equipment: "barbell", muscles: ["Quads", "Glutes"] },
-    { name: "Leg Press", focus: ["Lower Body/Legs", "Squat"], equipment: "machine", muscles: ["Quads"] },
-    { name: "Barbell Deadlift", focus: ["Full Body", "Lower Body/Legs", "Hinge"], equipment: "barbell", muscles: ["Back", "Hamstrings", "Glutes"] },
-    { name: "Romanian Deadlifts", focus: ["Lower Body/Legs", "Hinge"], equipment: "barbell", muscles: ["Hamstrings", "Glutes"] },
-    { name: "Overhead Press", focus: ["Upper Body", "Push"], equipment: "barbell", muscles: ["Shoulders"] },
-    { name: "Lunges", focus: ["Lower Body/Legs", "Squat"], equipment: "dumbbell", muscles: ["Quads", "Glutes"] }
+/* ===================================================
+   GLOBAL CONSTANTS
+=================================================== */
+
+const APP_VERSION = "9.0.0";
+const STORAGE_KEY = "fittrack_pro_v9";
+
+/* ===================================================
+   LEVEL & TIER SYSTEM
+=================================================== */
+
+const LEVEL_TIERS = [
+  { tier: "Beginner", minLevel: 1, unlocks: ["manual_workouts"] },
+  { tier: "Intermediate", minLevel: 5, unlocks: ["ai_workouts", "meal_builder"] },
+  { tier: "Advanced", minLevel: 10, unlocks: ["analytics", "core_finishers"] },
+  { tier: "Elite", minLevel: 20, unlocks: ["program_templates", "coach_features"] },
+  { tier: "Legend", minLevel: 35, unlocks: ["everything"] }
 ];
 
-const CORE_EXERCISES = ["Plank", "Crunches", "Leg Raises", "Russian Twists", "Deadbugs", "Bicycle Crunches", "Hollow Hold", "Bird Dog"];
-const MUSCLE_LIST = ["Chest", "Back", "Shoulders", "Quads", "Hamstrings", "Glutes", "Triceps", "Biceps", "Core"];
+function xpForNextLevel(level) {
+  return Math.floor(100 * Math.pow(level, 1.25));
+}
 
-const TUTORIALS = [
-    { title: "Training Setup", content: "Select your environment (Gym/Home). Choose a focus. If you select 'Specific Muscle', you can pick multiple target areas. Check 'Cardio' or 'Core' to add those finishers to the end of your session." },
-    { title: "Tracking", content: "Inside the workout, log your sets, weight, and reps. For core exercises, you can toggle between Reps/Time and bodyweight modes. We've added a weight input to core so you can track weighted planks or crunches!" },
-    { title: "Meal Builder", content: "In the Nutrition tab, use the 'Make a Meal' button to combine multiple items. Adjust portions (packet/grams), name your creation, and save it to your inventory for one-tap logging." }
-];
+/* ===================================================
+   DEFAULT APP STATE
+=================================================== */
 
-// --- GAMIFICATION DATA ---
+const DEFAULT_STATE = {
+  meta: {
+    version: APP_VERSION,
+    firstLaunch: Date.now()
+  },
 
-const ACHIEVEMENTS = [
-    // 50 Bronze
-    ...Array.from({length:50},(_,i)=>({id:i+1,name:`Bronze Achievement ${i+1}`,xp:10,type:'bronze',desc:`Complete bronze task ${i+1}`,unlocked:false})),
-    // 25 Silver
-    ...Array.from({length:25},(_,i)=>({id:50+i+1,name:`Silver Achievement ${i+1}`,xp:25,type:'silver',desc:`Complete silver task ${i+1}`,unlocked:false})),
-    // 15 Gold
-    ...Array.from({length:15},(_,i)=>({id:75+i+1,name:`Gold Achievement ${i+1}`,xp:50,type:'gold',desc:`Complete gold task ${i+1}`,unlocked:false})),
-    // 8 Platinum
-    ...Array.from({length:8},(_,i)=>({id:90+i+1,name:`Platinum Achievement ${i+1}`,xp:100,type:'platinum',desc:`Complete platinum task ${i+1}`,unlocked:false})),
-    // 2 Lifetime
-    ...Array.from({length:2},(_,i)=>({id:98+i+1,name:`Lifetime Achievement ${i+1}`,xp:500,type:'lifetime',desc:`Complete lifetime task ${i+1}`,unlocked:false}))
-];
+  ui: {
+    activeTab: "dashboard",
+    nutritionTab: "log",
+    metricsTab: "checkin",
+    historyTab: "training"
+  },
 
-const BADGES = [
-    {id:1,name:"Community Helper",desc:"Help other users in the community",unlocked:false},
-    {id:2,name:"Coach Badge",desc:"Provide guidance and tips",unlocked:false},
-    {id:3,name:"Gym Enthusiast Badge",desc:"Hit training goals consistently",unlocked:false},
-    {id:4,name:"Committed Badge",desc:"Maintain streaks for 30+ days",unlocked:false}
-];
+  user: {
+    name: "Athlete",
+    level: 1,
+    xp: 0,
+    tier: "Beginner",
+    streak: 0,
+    lastActiveDate: null
+  },
+
+  stats: {
+    totalWorkouts: 0,
+    totalMealsLogged: 0,
+    totalCaloriesLogged: 0,
+    totalProteinLogged: 0
+  },
+
+  goals: {
+    calories: 2500,
+    water: 2500
+  },
+
+  hydration: {
+    daily: {}
+  },
+
+  workouts: {
+    history: [],
+    active: null
+  },
+
+  nutrition: {
+    dailyMeals: [],
+    archive: [],
+    customFoodDb: []
+  },
+
+  metrics: {
+    history: [],
+    currentPhotos: {
+      front: null,
+      side: null,
+      back: null
+    }
+  },
+
+  gamification: {
+    unlockedFeatures: [],
+    achievements: {},
+    badges: {}
+  }
+};
+
+/* ===================================================
+   APP STATE (LIVE)
+=================================================== */
+
+let state = structuredClone(DEFAULT_STATE);
+
+/* ===================================================
+   PERSISTENCE
+=================================================== */
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return;
+
+    const parsed = JSON.parse(saved);
+
+    // Defensive merge
+    state = {
+      ...DEFAULT_STATE,
+      ...parsed,
+      meta: {
+        ...DEFAULT_STATE.meta,
+        ...parsed.meta
+      }
+    };
+
+  } catch (err) {
+    console.error("Failed to load state:", err);
+    state = structuredClone(DEFAULT_STATE);
+  }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (err) {
+    console.error("Failed to save state:", err);
+  }
+}
+
+/* ===================================================
+   DATE HELPERS
+=================================================== */
+
+function todayISO() {
+  return new Date().toISOString().split("T")[0];
+}
+
+function isSameDay(a, b) {
+  return a === b;
+}
+
+/* ===================================================
+   XP & LEVEL ENGINE (CORE)
+=================================================== */
+
+function addXP(amount, reason = "activity") {
+  if (!Number.isFinite(amount) || amount <= 0) return;
+
+  state.user.xp += amount;
+
+  let leveledUp = false;
+
+  while (state.user.xp >= xpForNextLevel(state.user.level)) {
+    state.user.xp -= xpForNextLevel(state.user.level);
+    state.user.level++;
+    leveledUp = true;
+  }
+
+  if (leveledUp) {
+    updateUserTier();
+  }
+
+  saveState();
+  renderDashboard();
+}
+
+function updateUserTier() {
+  let currentTier = LEVEL_TIERS[0];
+
+  for (const tier of LEVEL_TIERS) {
+    if (state.user.level >= tier.minLevel) {
+      currentTier = tier;
+    }
+  }
+
+  state.user.tier = currentTier.tier;
+  state.gamification.unlockedFeatures = currentTier.unlocks;
+}
+
+/* ===================================================
+   STREAK TRACKING
+=================================================== */
+
+function updateDailyStreak() {
+  const today = todayISO();
+
+  if (!state.user.lastActiveDate) {
+    state.user.streak = 1;
+  } else {
+    const last = state.user.lastActiveDate;
+
+    const diff =
+      (new Date(today) - new Date(last)) / (1000 * 60 * 60 * 24);
+
+    if (diff === 1) {
+      state.user.streak++;
+      addXP(10, "daily_streak");
+    } else if (diff > 1) {
+      state.user.streak = 1;
+    }
+  }
+
+  state.user.lastActiveDate = today;
+}
+
+/* ===================================================
+   NAVIGATION
+=================================================== */
+
+function switchTab(tabId) {
+  state.ui.activeTab = tabId;
+
+  document.querySelectorAll(".tab-content").forEach(el => {
+    el.classList.add("hidden");
+    el.classList.remove("active");
+  });
+
+  const active = document.getElementById(tabId);
+  if (active) {
+    active.classList.remove("hidden");
+    active.classList.add("active");
+  }
+
+  document.querySelectorAll(".nav-item").forEach(btn => {
+    btn.classList.toggle(
+      "active",
+      btn.dataset.tab === tabId
+    );
+  });
+
+  saveState();
+
+  // Lazy rendering hooks
+  if (tabId === "dashboard") renderDashboard();
+  if (tabId === "achievements") renderAchievements?.();
+}
+
+/* ===================================================
+   DASHBOARD RENDERING (BASE)
+=================================================== */
+
+function renderDashboard() {
+  const today = todayISO();
+  const mealsToday = state.nutrition.dailyMeals.filter(m => m.date === today);
+
+  const calories = mealsToday.reduce((a, b) => a + Number(b.calories || 0), 0);
+  const protein = mealsToday.reduce((a, b) => a + Number(b.protein || 0), 0);
+
+  setText("dash-calories", Math.round(calories));
+  setText("dash-protein", protein + "g");
+  setText("dash-carbs", Math.round((calories * 0.4) / 4) + "g");
+  setText("dash-fat", Math.round((calories * 0.3) / 9) + "g");
+
+  const water = state.hydration.daily[today] || 0;
+  setText(
+    "water-count",
+    `${(water / 1000).toFixed(1)}L`
+  );
+
+  setText("user-tier", state.user.tier);
+  setText("user-xp", state.user.xp);
+  setText("user-streak", state.user.streak);
+}
+
+/* ===================================================
+   DOM HELPERS
+=================================================== */
+
+function setText(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.innerText = value;
+}
+
+/* ===================================================
+   WATER TRACKING (BASE)
+=================================================== */
+
+function updateWater(amount) {
+  const today = todayISO();
+  state.hydration.daily[today] =
+    Math.max(0, (state.hydration.daily[today] || 0) + amount);
+
+  addXP(2, "hydration");
+  saveState();
+  renderDashboard();
+}
+
+/* ===================================================
+   BOOTSTRAP
+=================================================== */
+
+window.addEventListener("load", () => {
+  loadState();
+  updateDailyStreak();
+  updateUserTier();
+  renderDashboard();
+  saveState();
+});
+/*****************************************************
+ * FITTRACK PRO V9
+ * PART 2 / 5 — WORKOUT ENGINE + AI COACH
+ *****************************************************/
+
+/* ===================================================
+   EXERCISE DATABASE
+=================================================== */
+
+const EXERCISE_DB = {
+  chest: [
+    { id: "bench_press", name: "Bench Press", type: "compound" },
+    { id: "incline_db_press", name: "Incline DB Press", type: "compound" },
+    { id: "chest_fly", name: "Chest Fly", type: "isolation" }
+  ],
+  back: [
+    { id: "deadlift", name: "Deadlift", type: "compound" },
+    { id: "lat_pulldown", name: "Lat Pulldown", type: "compound" },
+    { id: "seated_row", name: "Seated Row", type: "compound" }
+  ],
+  legs: [
+    { id: "squat", name: "Squat", type: "compound" },
+    { id: "leg_press", name: "Leg Press", type: "compound" },
+    { id: "leg_curl", name: "Leg Curl", type: "isolation" }
+  ],
+  shoulders: [
+    { id: "ohp", name: "Overhead Press", type: "compound" },
+    { id: "lateral_raise", name: "Lateral Raise", type: "isolation" }
+  ],
+  arms: [
+    { id: "barbell_curl", name: "Barbell Curl", type: "isolation" },
+    { id: "tricep_pushdown", name: "Tricep Pushdown", type: "isolation" }
+  ],
+  core: [
+    { id: "plank", name: "Plank", type: "core" },
+    { id: "hanging_leg_raise", name: "Hanging Leg Raise", type: "core" }
+  ],
+  cardio: [
+    { id: "treadmill", name: "Treadmill", type: "cardio" },
+    { id: "bike", name: "Stationary Bike", type: "cardio" }
+  ]
+};
+
+/* ===================================================
+   ACTIVE WORKOUT STRUCTURE
+=================================================== */
+
+function startWorkout(mode = "manual", focus = null) {
+  state.workouts.active = {
+    id: crypto.randomUUID(),
+    mode,
+    focus,
+    startTime: Date.now(),
+    exercises: [],
+    finishers: [],
+    notes: ""
+  };
+
+  saveState();
+  renderActiveWorkout();
+}
+
+/* ===================================================
+   MANUAL WORKOUT BUILDER
+=================================================== */
+
+function addExerciseToWorkout(category, exerciseId) {
+  if (!state.workouts.active) return;
+
+  const exercise = EXERCISE_DB[category].find(e => e.id === exerciseId);
+  if (!exercise) return;
+
+  state.workouts.active.exercises.push({
+    ...exercise,
+    sets: []
+  });
+
+  saveState();
+  renderActiveWorkout();
+}
+
+function addSet(exerciseIndex, reps = 10, weight = 0, rpe = 7) {
+  const ex = state.workouts.active?.exercises[exerciseIndex];
+  if (!ex) return;
+
+  ex.sets.push({
+    reps,
+    weight,
+    rpe
+  });
+
+  saveState();
+  renderActiveWorkout();
+}
+
+/* ===================================================
+   CARDIO & CORE FINISHERS
+=================================================== */
+
+function addFinisher(type, durationMinutes) {
+  if (!state.workouts.active) return;
+
+  state.workouts.active.finishers.push({
+    type,
+    duration: durationMinutes
+  });
+
+  saveState();
+}
+
+/* ===================================================
+   AI COACH WORKOUT GENERATION
+=================================================== */
+
+function generateAIWorkout(goal = "hypertrophy") {
+  const templates = {
+    hypertrophy: ["chest", "back", "legs"],
+    strength: ["legs", "back", "chest"],
+    fatloss: ["full"]
+  };
+
+  const focusAreas = templates[goal] || ["full"];
+
+  startWorkout("ai", goal);
+
+  focusAreas.forEach(area => {
+    const group =
+      area === "full"
+        ? Object.values(EXERCISE_DB).flat()
+        : EXERCISE_DB[area];
+
+    const picks = group
+      .sort(() => 0.5 - Math.random())
+      .slice(0, 3);
+
+    picks.forEach(ex =>
+      state.workouts.active.exercises.push({
+        ...ex,
+        sets: [
+          { reps: 10, weight: 0, rpe: 7 },
+          { reps: 10, weight: 0, rpe: 8 }
+        ]
+      })
+    );
+  });
+
+  addFinisher("cardio", 10);
+  addFinisher("core", 8);
+
+  saveState();
+  renderActiveWorkout();
+}
+
+/* ===================================================
+   WORKOUT TIMER
+=================================================== */
+
+let workoutTimerInterval = null;
+
+function startWorkoutTimer() {
+  if (workoutTimerInterval) return;
+
+  workoutTimerInterval = setInterval(() => {
+    renderWorkoutTimer();
+  }, 1000);
+}
+
+function stopWorkoutTimer() {
+  clearInterval(workoutTimerInterval);
+  workoutTimerInterval = null;
+}
+
+function renderWorkoutTimer() {
+  if (!state.workouts.active) return;
+
+  const elapsed =
+    Math.floor((Date.now() - state.workouts.active.startTime) / 1000);
+
+  const mins = Math.floor(elapsed / 60);
+  const secs = elapsed % 60;
+
+  setText("workout-timer", `${mins}:${secs.toString().padStart(2, "0")}`);
+}
+
+/* ===================================================
+   VOLUME & INTENSITY CALCULATION
+=================================================== */
+
+function calculateWorkoutVolume(workout) {
+  let volume = 0;
+
+  workout.exercises.forEach(ex => {
+    ex.sets.forEach(set => {
+      volume += set.reps * set.weight;
+    });
+  });
+
+  return volume;
+}
+
+function averageRPE(workout) {
+  let total = 0;
+  let count = 0;
+
+  workout.exercises.forEach(ex => {
+    ex.sets.forEach(set => {
+      total += set.rpe;
+      count++;
+    });
+  });
+
+  return count ? (total / count).toFixed(1) : 0;
+}
+
+/* ===================================================
+   COMPLETE WORKOUT
+=================================================== */
+
+function finishWorkout() {
+  const workout = state.workouts.active;
+  if (!workout) return;
+
+  workout.endTime = Date.now();
+  workout.durationMinutes = Math.round(
+    (workout.endTime - workout.startTime) / 60000
+  );
+
+  workout.volume = calculateWorkoutVolume(workout);
+  workout.avgRPE = averageRPE(workout);
+
+  state.workouts.history.push(workout);
+  state.workouts.active = null;
+
+  state.stats.totalWorkouts++;
+
+  // XP REWARD ENGINE
+  let xpEarned = 50;
+  xpEarned += Math.floor(workout.volume / 500);
+  xpEarned += workout.durationMinutes;
+
+  addXP(xpEarned, "workout_complete");
+
+  stopWorkoutTimer();
+  saveState();
+  renderDashboard();
+}
+
+/* ===================================================
+   RENDER ACTIVE WORKOUT (BASIC)
+=================================================== */
+
+function renderActiveWorkout() {
+  const container = document.getElementById("active-workout");
+  if (!container || !state.workouts.active) return;
+
+  container.innerHTML = `
+    <h3>${state.workouts.active.mode.toUpperCase()} WORKOUT</h3>
+    <div id="workout-timer">0:00</div>
+    <p>Exercises: ${state.workouts.active.exercises.length}</p>
+  `;
+
+  startWorkoutTimer();
+}
+/*****************************************************
+ * FITTRACK PRO V9
+ * PART 3 / 5 — NUTRITION SYSTEM + ANALYTICS
+ *****************************************************/
+
+/* ===================================================
+   NUTRITION DATA STRUCTURES
+=================================================== */
+
+if (!state.nutrition) {
+  state.nutrition = {
+    diary: {},
+    database: [],
+    meals: [],
+    archivedDays: []
+  };
+}
+
+/* ===================================================
+   FOOD DATABASE MANAGEMENT
+=================================================== */
+
+function saveToDatabase() {
+  const name = document.getElementById("form-name").value.trim();
+  const cals = +document.getElementById("form-cals").value;
+  const protein = +document.getElementById("form-prot").value;
+
+  if (!name || !cals) return alert("Missing values");
+
+  state.nutrition.database.push({
+    id: crypto.randomUUID(),
+    name,
+    calories: cals,
+    protein,
+    carbs: 0,
+    fat: 0
+  });
+
+  saveState();
+  renderFoodDatabase();
+}
+
+function renderFoodDatabase() {
+  const list = document.getElementById("custom-db-list");
+  if (!list) return;
+
+  list.innerHTML = "";
+  state.nutrition.database.forEach(item => {
+    list.innerHTML += `
+      <div class="food-db-item">
+        <strong>${item.name}</strong>
+        <span>${item.calories} kcal</span>
+      </div>
+    `;
+  });
+}
+
+/* ===================================================
+   FOOD SEARCH & LOGGING
+=================================================== */
+
+function handleFoodSearch(query) {
+  const results = document.getElementById("food-results");
+  if (!results) return;
+
+  results.innerHTML = "";
+  if (!query) return;
+
+  const matches = state.nutrition.database.filter(f =>
+    f.name.toLowerCase().includes(query.toLowerCase())
+  );
+
+  matches.forEach(food => {
+    const div = document.createElement("div");
+    div.className = "food-result";
+    div.textContent = `${food.name} (${food.calories} kcal)`;
+    div.onclick = () => openPortionModal(food);
+    results.appendChild(div);
+  });
+}
+
+/* ===================================================
+   PORTION SYSTEM
+=================================================== */
+
+let portionContext = null;
+let portionMode = "unit";
+
+function openPortionModal(food) {
+  portionContext = food;
+  setText("portion-item-name", food.name);
+  document.getElementById("portion-modal").classList.remove("hidden");
+}
+
+function closePortionModal() {
+  portionContext = null;
+  document.getElementById("portion-modal").classList.add("hidden");
+}
+
+function setPortionMode(mode) {
+  portionMode = mode;
+}
+
+function adjustPortionQty(delta) {
+  const input = document.getElementById("portion-qty-input");
+  input.value = Math.max(1, +input.value + delta);
+}
+
+function confirmLogPortion() {
+  if (!portionContext) return;
+
+  const qty = +document.getElementById("portion-qty-input").value;
+  const today = getTodayKey();
+
+  if (!state.nutrition.diary[today]) {
+    state.nutrition.diary[today] = [];
+  }
+
+  state.nutrition.diary[today].push({
+    ...portionContext,
+    qty,
+    mode: portionMode,
+    timestamp: Date.now()
+  });
+
+  addXP(5 * qty, "nutrition_log");
+
+  saveState();
+  closePortionModal();
+  renderDailyLog();
+}
+
+/* ===================================================
+   DAILY NUTRITION LOG
+=================================================== */
+
+function renderDailyLog() {
+  const today = getTodayKey();
+  const list = document.getElementById("daily-log-list");
+  if (!list) return;
+
+  list.innerHTML = "";
+
+  const entries = state.nutrition.diary[today] || [];
+  let totals = { calories: 0, protein: 0 };
+
+  entries.forEach(entry => {
+    totals.calories += entry.calories * entry.qty;
+    totals.protein += entry.protein * entry.qty;
+
+    list.innerHTML += `
+      <div class="log-item">
+        ${entry.name} × ${entry.qty}
+      </div>
+    `;
+  });
+
+  setText("total-day-cals", `${totals.calories} kcal`);
+  setText("total-day-prot", `${totals.protein}g Protein`);
+
+  document
+    .getElementById("daily-totals-card")
+    ?.classList.toggle("hidden", entries.length === 0);
+
+  evaluateNutritionCompliance(totals);
+}
+
+/* ===================================================
+   ARCHIVE DAY
+=================================================== */
+
+function archiveDailyNutrition() {
+  const today = getTodayKey();
+  const data = state.nutrition.diary[today];
+  if (!data) return;
+
+  state.nutrition.archivedDays.push({
+    date: today,
+    entries: data
+  });
+
+  delete state.nutrition.diary[today];
+
+  addXP(50, "nutrition_archive");
+  updateStreak("nutrition");
+
+  saveState();
+  renderDailyLog();
+}
+
+/* ===================================================
+   MEAL BUILDER
+=================================================== */
+
+let mealBuilder = [];
+
+function handleMealSearch(query) {
+  const results = document.getElementById("meal-search-results");
+  if (!results) return;
+
+  results.innerHTML = "";
+  if (!query) return;
+
+  state.nutrition.database
+    .filter(f => f.name.toLowerCase().includes(query.toLowerCase()))
+    .forEach(food => {
+      const div = document.createElement("div");
+      div.textContent = food.name;
+      div.onclick = () => addMealIngredient(food);
+      results.appendChild(div);
+    });
+}
+
+function addMealIngredient(food) {
+  mealBuilder.push({ ...food, qty: 1 });
+  renderMealBuilder();
+}
+
+function renderMealBuilder() {
+  const list = document.getElementById("meal-builder-list");
+  if (!list) return;
+
+  list.innerHTML = "";
+  let cals = 0;
+  let protein = 0;
+
+  mealBuilder.forEach(item => {
+    cals += item.calories * item.qty;
+    protein += item.protein * item.qty;
+
+    list.innerHTML += `
+      <div>${item.name} × ${item.qty}</div>
+    `;
+  });
+
+  setText("meal-builder-stats", `${cals} kcal • ${protein}g Protein`);
+}
+
+function saveMealToInventory() {
+  const name = document.getElementById("meal-builder-name").value.trim();
+  if (!name || mealBuilder.length === 0) return;
+
+  state.nutrition.meals.push({
+    id: crypto.randomUUID(),
+    name,
+    items: mealBuilder
+  });
+
+  mealBuilder = [];
+  addXP(100, "meal_created");
+  saveState();
+  closeMealModal();
+}
+
+/* ===================================================
+   COMPLIANCE & ANALYTICS
+=================================================== */
+
+function evaluateNutritionCompliance(totals) {
+  const proteinTarget = 120;
+  const calorieTarget = 2200;
+
+  let score = 0;
+  if (totals.protein >= proteinTarget) score += 50;
+  if (totals.calories <= calorieTarget + 200) score += 50;
+
+  if (score >= 80) {
+    addXP(20, "nutrition_compliance");
+  }
+}
+
+/* ===================================================
+   UTILITIES
+=================================================== */
+
+function getTodayKey() {
+  return new Date().toISOString().split("T")[0];
+}
+
+/* ===================================================
+   INIT
+=================================================== */
+
+renderFoodDatabase();
+renderDailyLog();
+/*****************************************************
+ * FITTRACK PRO V9
+ * PART 4 / 5 — GAMIFICATION ENGINE
+ *****************************************************/
+
+/* ===================================================
+   CORE GAMIFICATION STATE
+=================================================== */
+
+if (!state.gamification) {
+  state.gamification = {
+    xp: 0,
+    level: 1,
+    tier: "Beginner",
+    achievements: {},
+    badges: {},
+    streaks: {
+      workout: 0,
+      nutrition: 0,
+      app: 0
+    },
+    lastAction: {}
+  };
+}
+
+/* ===================================================
+   XP & LEVEL CURVE
+=================================================== */
+
+const LEVEL_XP_CURVE = level =>
+  Math.floor(100 * Math.pow(level, 1.5));
+
+function addXP(amount, reason = "") {
+  const now = Date.now();
+
+  // Anti-farming (same action spam)
+  if (state.gamification.lastAction[reason]) {
+    if (now - state.gamification.lastAction[reason] < 5000) return;
+  }
+
+  state.gamification.lastAction[reason] = now;
+  state.gamification.xp += amount;
+
+  while (state.gamification.xp >= LEVEL_XP_CURVE(state.gamification.level)) {
+    state.gamification.xp -= LEVEL_XP_CURVE(state.gamification.level);
+    state.gamification.level++;
+    evaluateTier();
+  }
+
+  updateGamificationUI();
+  saveState();
+}
+
+/* ===================================================
+   TIERS & FEATURE UNLOCKS
+=================================================== */
 
 const TIERS = [
-    {level:1,name:'Novice',xpReq:0,unlock:'basic'},
-    {level:2,name:'Apprentice',xpReq:500,unlock:'intermediate'},
-    {level:3,name:'Intermediate',xpReq:1500,unlock:'advanced'},
-    {level:4,name:'Advanced',xpReq:3000,unlock:'expert'},
-    {level:5,name:'Expert',xpReq:6000,unlock:'all'}
+  { name: "Beginner", level: 1 },
+  { name: "Intermediate", level: 10 },
+  { name: "Advanced", level: 25 },
+  { name: "Elite", level: 50 },
+  { name: "Master", level: 100 }
 ];
 
-let timerInterval;
-let activeWorkoutStart = null;
-let currentPhotoType = null;
-let html5QrCode;
-let scannerMode = 'db'; // 'db' or 'meal'
+function evaluateTier() {
+  for (let i = TIERS.length - 1; i >= 0; i--) {
+    if (state.gamification.level >= TIERS[i].level) {
+      state.gamification.tier = TIERS[i].name;
+      break;
+    }
+  }
+}
 
-let state = {
-    activeTab: 'dashboard', historyTab: 'training', nutritionTab: 'log', metricsTab: 'checkin',
-    workoutEnv: 'gym', viewDate: new Date().toISOString().split('T')[0],
-    goals: { calories: 2500, water: 2500 },
-    equipment: { 
-        gym: { barbell: true, dumbbell: true, kettlebell: true, cable: true, machine: true, bodyweight: true }, 
-        home: { dumbbell: false, kettlebell: false, bodyweight: true, bands: false } 
-    },
-    dailyMeals: [], waterLogs: {}, workoutHistory: [], metricsHistory: [], customFoodDb: [],
-    currentPhotos: { front: null, side: null, back: null },
-    selectedMuscles: [], nutritionalArchive: [],
-    // --- GAMIFICATION STATE ---
-    xp:0,
-    level:1,
-    unlockedFeatures:['basic'],
-    achievements:ACHIEVEMENTS.map(a=>({...a})),
-    badges:BADGES.map(b=>({...b})),
-    streak:0,
-    quizzesCompleted:0,
-    appUsageDays:[]
+/* ===================================================
+   FEATURE LOCK SYSTEM
+=================================================== */
+
+const FEATURE_UNLOCKS = {
+  aiWorkouts: "Intermediate",
+  analytics: "Advanced",
+  coachingTools: "Elite",
+  customPrograms: "Master"
 };
 
-let portionSelection = { item: null, mode: 'packet' };
-let mealBuilderItems = [];
+function isFeatureUnlocked(feature) {
+  const tierOrder = TIERS.map(t => t.name);
+  return (
+    tierOrder.indexOf(state.gamification.tier) >=
+    tierOrder.indexOf(FEATURE_UNLOCKS[feature])
+  );
+}
 
-// --- LOAD STATE ---
-window.onload = () => {
-    const saved = localStorage.getItem('fittrack_combined_v9');
-    if(saved) state = {...state,...JSON.parse(saved)};
-    document.getElementById('status-date').innerText = new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-    document.getElementById('set-cal-goal').value = state.goals.calories;
-    document.getElementById('workout-date-input').value = state.viewDate;
-    initEquipmentSettings();
-    renderDashboard();
-    renderCustomDb();
-    renderMuscleSelection();
-    renderGamification();
-    document.getElementById('photo-input').addEventListener('change', handlePhotoUpload);
-    lucide.createIcons();
-    trackDailyUsage();
+/* ===================================================
+   ACHIEVEMENT DEFINITIONS
+=================================================== */
+
+const ACHIEVEMENT_TIERS = {
+  bronze: { xp: 25 },
+  silver: { xp: 75 },
+  gold: { xp: 200 },
+  platinum: { xp: 500 },
+  lifetime: { xp: 2000 }
 };
 
-// --- SAVE STATE ---
-function saveState() { localStorage.setItem('fittrack_combined_v9', JSON.stringify(state)); }
+const achievements = [];
 
-// --- TAB SWITCH ---
-function switchTab(tabId) {
-    state.activeTab = tabId;
-    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-    document.getElementById(tabId).classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(btn=>{
-        const icon = btn.querySelector('.nav-bg');
-        const isMatch = btn.getAttribute('data-tab')===tabId;
-        btn.className=`nav-item flex flex-col items-center gap-1.5 ${isMatch?'text-indigo-600':'text-slate-300'}`;
-        icon.className=`w-12 h-8 rounded-full flex items-center justify-center nav-bg ${isMatch?'bg-indigo-50':''}`;
-    });
-    if(tabId==='dashboard') renderDashboard();
-    if(tabId==='history') renderHistory();
-    if(tabId==='nutrition'){ renderDailyLog(); renderCustomDb(); }
-    if(tabId==='metrics') renderMetrics();
-    lucide.createIcons();
+/* -------- Bronze (50) -------- */
+for (let i = 1; i <= 50; i++) {
+  achievements.push({
+    id: `bronze_${i}`,
+    name: `Getting Started ${i}`,
+    tier: "bronze",
+    condition: s => s.stats?.workouts >= i
+  });
 }
 
-// --- GAMIFICATION FUNCTIONS ---
-
-function addXP(amount) {
-    state.xp += amount;
-    checkLevelUp();
-    saveState();
-    renderGamification();
+/* -------- Silver (25) -------- */
+for (let i = 1; i <= 25; i++) {
+  achievements.push({
+    id: `silver_${i}`,
+    name: `Consistency ${i * 5} Days`,
+    tier: "silver",
+    condition: s => s.gamification.streaks.workout >= i * 5
+  });
 }
 
-function checkLevelUp() {
-    let newLevel = state.level;
-    for(let i=TIERS.length-1;i>=0;i--){
-        if(state.xp>=TIERS[i].xpReq){ newLevel = TIERS[i].level; break; }
+/* -------- Gold (15) -------- */
+for (let i = 1; i <= 15; i++) {
+  achievements.push({
+    id: `gold_${i}`,
+    name: `Elite Performer ${i}`,
+    tier: "gold",
+    condition: s => s.stats?.totalVolume >= i * 10000
+  });
+}
+
+/* -------- Platinum (8) -------- */
+for (let i = 1; i <= 8; i++) {
+  achievements.push({
+    id: `platinum_${i}`,
+    name: `Year of Discipline ${i}`,
+    tier: "platinum",
+    condition: s => s.stats?.daysTracked >= i * 90
+  });
+}
+
+/* -------- Lifetime (2) -------- */
+achievements.push(
+  {
+    id: "lifetime_1",
+    name: "FitTrack Legend",
+    tier: "lifetime",
+    condition: s => s.gamification.level >= 150
+  },
+  {
+    id: "lifetime_2",
+    name: "Top 1%",
+    tier: "lifetime",
+    condition: s => s.stats?.workouts >= 1000
+  }
+);
+
+/* ===================================================
+   ACHIEVEMENT EVALUATION
+=================================================== */
+
+function evaluateAchievements() {
+  achievements.forEach(a => {
+    if (state.gamification.achievements[a.id]) return;
+    if (a.condition(state)) {
+      unlockAchievement(a);
     }
-    if(newLevel!==state.level){
-        state.level=newLevel;
-        state.unlockedFeatures.push(TIERS.find(t=>t.level===newLevel).unlock);
-        alert(`🎉 Congrats! You've reached Level ${state.level} (${TIERS.find(t=>t.level===newLevel).name})`);
-    }
+  });
 }
 
-function unlockAchievement(id){
-    const ach = state.achievements.find(a=>a.id===id);
-    if(ach && !ach.unlocked){
-        ach.unlocked=true;
-        addXP(ach.xp);
-        alert(`🏆 Achievement unlocked: ${ach.name} (+${ach.xp} XP)`);
-        saveState();
-        renderGamification();
-    }
+function unlockAchievement(achievement) {
+  state.gamification.achievements[achievement.id] = true;
+  addXP(ACHIEVEMENT_TIERS[achievement.tier].xp, "achievement");
+  renderAchievements();
 }
 
-function unlockBadge(id){
-    const badge = state.badges.find(b=>b.id===id);
-    if(badge && !badge.unlocked){
-        badge.unlocked=true;
-        addXP(50);
-        alert(`🎖 Badge unlocked: ${badge.name} (+50 XP)`);
-        saveState();
-        renderGamification();
+/* ===================================================
+   BADGES SYSTEM
+=================================================== */
+
+const BADGES = {
+  community: {
+    name: "Community Helper",
+    condition: s => s.stats?.communityPosts >= 10
+  },
+  coach: {
+    name: "Coach Badge",
+    condition: s => s.stats?.clientsCoached >= 1
+  },
+  gym: {
+    name: "Gym Enthusiast",
+    condition: s => s.stats?.gymWorkouts >= 50
+  },
+  committed: {
+    name: "Committed",
+    condition: s => s.gamification.streaks.app >= 30
+  }
+};
+
+function evaluateBadges() {
+  Object.entries(BADGES).forEach(([id, badge]) => {
+    if (state.gamification.badges[id]) return;
+    if (badge.condition(state)) {
+      state.gamification.badges[id] = true;
+      addXP(100, "badge");
     }
+  });
 }
 
-function renderGamification(){
-    const container = document.getElementById('gamification-container');
-    if(!container) return;
-    const tierName = TIERS.find(t=>t.level===state.level).name;
-    container.innerHTML = `
-        <div class="text-sm font-bold mb-2">Level ${state.level} - ${tierName} | XP: ${state.xp}</div>
-        <div class="grid grid-cols-3 gap-2 mb-4">
-            ${state.achievements.filter(a=>a.unlocked).map(a=>`<span class="px-2 py-1 text-[8px] rounded bg-green-100">${a.name}</span>`).join('')}
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-            ${state.badges.filter(b=>b.unlocked).map(b=>`<span class="px-2 py-1 text-[8px] rounded bg-indigo-100">${b.name}</span>`).join('')}
-        </div>
+/* ===================================================
+   STREAK TRACKING
+=================================================== */
+
+function updateStreak(type) {
+  state.gamification.streaks[type]++;
+  addXP(10, "streak");
+}
+
+/* ===================================================
+   UI RENDERING
+=================================================== */
+
+function updateGamificationUI() {
+  setText("user-xp", state.gamification.xp);
+  setText("user-tier", state.gamification.tier);
+}
+
+function renderAchievements() {
+  const list = document.getElementById("achievements-list");
+  if (!list) return;
+
+  list.innerHTML = "";
+  achievements.forEach(a => {
+    const unlocked = state.gamification.achievements[a.id];
+    list.innerHTML += `
+      <div class="achievement ${a.tier} ${unlocked ? "unlocked" : "locked"}">
+        ${a.name}
+      </div>
     `;
+  });
 }
 
-// Tracks daily app usage streaks
-function trackDailyUsage(){
-    const today = new Date().toISOString().split('T')[0];
-    if(!state.appUsageDays.includes(today)) state.appUsageDays.push(today);
-    state.streak = calculateStreak(state.appUsageDays);
-    // Unlock simple streak achievements
-    if(state.streak>=5) unlockAchievement(1);
-    if(state.streak>=10) unlockAchievement(2);
-    saveState();
-}
+function renderBadges() {
+  const list = document.getElementById("badges-list");
+  if (!list) return;
 
-function calculateStreak(days){
-    if(days.length===0) return 0;
-    const sorted = days.sort();
-    let streak=1;
-    for(let i=days.length-1;i>0;i--){
-        const prev = new Date(sorted[i-1]);
-        const curr = new Date(sorted[i]);
-        const diff = (curr-prev)/(1000*60*60*24);
-        if(diff===1) streak++;
-        else break;
+  list.innerHTML = "";
+  Object.entries(BADGES).forEach(([id, badge]) => {
+    if (state.gamification.badges[id]) {
+      list.innerHTML += `<div class="badge">${badge.name}</div>`;
     }
-    return streak;
+  });
 }
 
-// Example of rewarding gamification for workouts
-function saveWorkout(){
-    clearInterval(timerInterval);
-    const exercisesLogged=[];
-    document.querySelectorAll('#exercise-list > div').forEach(card=>{
-        const selectElement = card.querySelector('select');
-        if(!selectElement) return;
-        const name = selectElement.value;
-        const sets=[];
-        card.querySelectorAll('.set-row').forEach(row=>{
-            const inputs=row.querySelectorAll('input');
-            sets.push({kg:inputs[0].value,reps:inputs[1].value});
-        });
-        exercisesLogged.push({name,sets});
-    });
-    
-    state.workoutHistory.unshift({
-        id:Date.now(),
-        date:state.viewDate,
-        focus:document.getElementById('active-workout-title').innerText,
-        duration:document.getElementById('workout-timer').innerText,
-        exercises:exercisesLogged
-    });
-    // Gamification: award XP for completing workout
-    addXP(50);
-    if(state.workoutHistory.length>=10) unlockAchievement(3); // example: unlock bronze
-    saveState();
-    document.getElementById('workout-setup').classList.remove('hidden'); 
-    document.getElementById('workout-active').classList.add('hidden');
-    switchTab('history');
-    renderGamification();
-    // --- GAMIFICATION UI INTERACTIONS ---
+/* ===================================================
+   PERIODIC EVALUATION HOOK
+=================================================== */
 
-function renderAchievementsList() {
-    const container = document.getElementById('achievements-list');
-    if (!container) return;
-    container.innerHTML = state.achievements.map(a => `
-        <div class="flex justify-between items-center p-2 border rounded mb-1 ${a.unlocked?'bg-green-50':'bg-slate-50'}">
-            <div>
-                <div class="font-bold text-sm">${a.name}</div>
-                <div class="text-xs">${a.desc}</div>
-            </div>
-            <div class="text-xs">${a.unlocked?'Unlocked':'Locked'}</div>
-        </div>
-    `).join('');
+setInterval(() => {
+  evaluateAchievements();
+  evaluateBadges();
+}, 5000);
+
+/* ===================================================
+   INIT
+=================================================== */
+
+evaluateTier();
+renderAchievements();
+renderBadges();
+updateGamificationUI();
+/*****************************************************
+ * FITTRACK PRO V9
+ * PART 5 / 5 — AI COACH + ANALYTICS + OFFLINE
+ *****************************************************/
+
+/* ===================================================
+   VERSIONING
+=================================================== */
+
+const APP_VERSION = "9.0.0";
+if (!state.app) state.app = {};
+state.app.version = APP_VERSION;
+
+/* ===================================================
+   AI COACH — WORKOUT GENERATION
+=================================================== */
+
+function generateAIWorkout() {
+  if (!isFeatureUnlocked("aiWorkouts")) {
+    alert("Unlock AI Workouts at Intermediate Tier");
+    return;
+  }
+
+  const focus = document.getElementById("workout-focus")?.value || "Full Body";
+  const env = state.workout?.environment || "gym";
+
+  const exercises = getExercisesByFocus(focus, env);
+  const programmed = exercises.map(ex => ({
+    name: ex,
+    sets: calculateSets(),
+    reps: calculateReps(),
+    load: calculateLoad(ex)
+  }));
+
+  startWorkoutSession("AI Generated Workout", programmed);
+  addXP(75, "ai_workout");
 }
 
-function renderBadgesList() {
-    const container = document.getElementById('badges-list');
-    if (!container) return;
-    container.innerHTML = state.badges.map(b => `
-        <div class="flex justify-between items-center p-2 border rounded mb-1 ${b.unlocked?'bg-indigo-50':'bg-slate-50'}">
-            <div>
-                <div class="font-bold text-sm">${b.name}</div>
-                <div class="text-xs">${b.desc}</div>
-            </div>
-            <div class="text-xs">${b.unlocked?'Unlocked':'Locked'}</div>
-        </div>
-    `).join('');
+/* ===================================================
+   EXERCISE LOGIC
+=================================================== */
+
+function getExercisesByFocus(focus, env) {
+  const base = {
+    "Full Body": ["Squat", "Bench Press", "Row"],
+    "Upper Body": ["Bench Press", "Pull Up", "Shoulder Press"],
+    "Lower Body/Legs": ["Squat", "RDL", "Lunge"],
+    "Specific Muscle": ["Isolation Movement"]
+  };
+
+  return base[focus] || base["Full Body"];
 }
 
-// --- GAMIFICATION EVENT TRIGGERS ---
-
-// Unlock achievements based on usage
-function checkUsageAchievements() {
-    if(state.streak >= 5) unlockAchievement(1);
-    if(state.streak >= 10) unlockAchievement(2);
-    if(state.appUsageDays.length >= 30) unlockAchievement(4); // bronze/milestone
+function calculateSets() {
+  return state.gamification.level < 10 ? 3 : 4;
 }
 
-// Unlock achievements for workouts
-function checkWorkoutAchievements() {
-    if(state.workoutHistory.length >= 10) unlockAchievement(3);
-    if(state.workoutHistory.length >= 25) unlockAchievement(5);
-    if(state.workoutHistory.length >= 50) unlockAchievement(7);
+function calculateReps() {
+  return state.gamification.level < 25 ? "8–10" : "6–8";
 }
 
-// Unlock achievements for nutrition
-function checkNutritionAchievements() {
-    if(state.dailyMeals.length >= 20) unlockAchievement(6);
-    if(state.nutritionalArchive.length >= 50) unlockAchievement(8);
+function calculateLoad(exercise) {
+  const history = state.stats?.exerciseHistory?.[exercise];
+  if (!history) return "Moderate";
+  return history.lastLoad * 1.025;
 }
 
-// Unlock badges for consistent engagement
-function checkBadgeAchievements() {
-    if(state.streak >= 7) unlockBadge(1);
-    if(state.streak >= 14) unlockBadge(2);
-    if(state.xp >= 2000) unlockBadge(3);
-    if(state.xp >= 5000) unlockBadge(4);
+/* ===================================================
+   PROGRESSION & DELOAD
+=================================================== */
+
+function evaluateProgression() {
+  const fatigue = state.stats?.fatigueScore || 0;
+
+  if (fatigue > 80) {
+    applyDeload();
+  }
 }
 
-// Call periodically or after key actions
-function updateGamification() {
-    checkUsageAchievements();
-    checkWorkoutAchievements();
-    checkNutritionAchievements();
-    checkBadgeAchievements();
-    renderGamification();
-    renderAchievementsList();
-    renderBadgesList();
-    saveState();
+function applyDeload() {
+  state.stats.deloadActive = true;
+  addXP(30, "smart_recovery");
 }
 
-// --- LEVEL PROGRESSION DISPLAY ---
-
-function renderLevelProgress() {
-    const container = document.getElementById('level-progress');
-    if(!container) return;
-    const nextTier = TIERS.find(t => t.xpReq > state.xp) || { xpReq: state.xp };
-    const currentTier = TIERS.find(t => t.level === state.level);
-    const progress = Math.min(100, ((state.xp - currentTier.xpReq)/(nextTier.xpReq - currentTier.xpReq))*100);
-    container.innerHTML = `
-        <div class="flex justify-between text-xs mb-1">
-            <span>Level ${state.level}</span>
-            <span>${state.xp}/${nextTier.xpReq} XP</span>
-        </div>
-        <div class="w-full bg-slate-200 rounded h-2">
-            <div class="bg-indigo-500 h-2 rounded" style="width:${progress}%"></div>
-        </div>
-    `;
+function clearDeload() {
+  state.stats.deloadActive = false;
 }
 
-// --- DAILY CHECK-IN & QUIZ GAMIFICATION ---
+/* ===================================================
+   RECOVERY & READINESS
+=================================================== */
 
-function completeDailyQuiz(score=100){
-    state.quizzesCompleted += 1;
-    addXP(score);
-    alert(`📝 Daily Quiz completed! +${score} XP`);
-    updateGamification();
+function calculateReadiness() {
+  const sleep = state.stats?.sleep || 7;
+  const soreness = state.stats?.soreness || 3;
+
+  return Math.max(0, Math.min(100, sleep * 10 - soreness * 5));
 }
 
-// --- GAMIFICATION INTEGRATION WITH WORKOUTS & NUTRITION ---
+/* ===================================================
+   GOAL-BASED NUTRITION AI
+=================================================== */
 
-function logMeal(meal) {
-    state.dailyMeals.push(meal);
-    addXP(15);
-    if(state.dailyMeals.length % 10 === 0) unlockAchievement(6);
-    saveState();
-    updateGamification();
+function suggestNutritionGoal() {
+  const goal = state.user?.goal || "maintenance";
+
+  switch (goal) {
+    case "fat_loss":
+      return { calories: 2000, protein: 140 };
+    case "muscle_gain":
+      return { calories: 2600, protein: 180 };
+    default:
+      return { calories: 2200, protein: 150 };
+  }
 }
 
-function logWater(ml){
-    const date = state.viewDate;
-    state.waterLogs[date] = (state.waterLogs[date] || 0) + ml;
-    addXP(5);
-    saveState();
-    updateGamification();
+/* ===================================================
+   ANALYTICS DATA (CHART READY)
+=================================================== */
+
+function buildWorkoutVolumeSeries() {
+  return state.history?.workouts?.map(w => ({
+    date: w.date,
+    volume: w.totalVolume
+  })) || [];
 }
 
-function completeWorkoutSession(durationMinutes){
-    addXP(durationMinutes*2); // 2 XP per minute
-    unlockAchievement(state.workoutHistory.length); // unlock achievement matching number of sessions
-    updateGamification();
+function buildWeightTrend() {
+  return state.metrics?.logs?.map(m => ({
+    date: m.date,
+    weight: m.weight
+  })) || [];
 }
 
-// --- STREAK & LOGIN TRACKING ---
-
-function trackDailyStreak() {
-    const today = new Date().toISOString().split('T')[0];
-    if(!state.appUsageDays.includes(today)) state.appUsageDays.push(today);
-    state.streak = calculateStreak(state.appUsageDays);
-    updateGamification();
+function buildNutritionComplianceSeries() {
+  return state.nutrition.archivedDays.map(d => ({
+    date: d.date,
+    compliance: d.complianceScore || 0
+  }));
 }
 
-// --- INTEGRATION WITH DASHBOARD ---
+/* ===================================================
+   OFFLINE-FIRST & PWA HOOKS
+=================================================== */
 
-function renderDashboard(){
-    document.getElementById('dashboard-xp').innerText = state.xp;
-    document.getElementById('dashboard-level').innerText = state.level;
-    renderLevelProgress();
-    renderGamification();
-    renderAchievementsList();
-    renderBadgesList();
-}
-
-// --- INITIALIZATION ---
-
-window.addEventListener('focus', () => {
-    trackDailyStreak();
+window.addEventListener("offline", () => {
+  console.warn("Offline mode enabled");
 });
 
-// Example: automatically update gamification after key actions
-document.addEventListener('workoutSaved', updateGamification);
-document.addEventListener('mealLogged', updateGamification);
-document.addEventListener('quizCompleted', updateGamification);
+window.addEventListener("online", () => {
+  console.info("Back online — syncing ready");
+});
 
-// --- UTILITY FUNCTIONS ---
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("sw.js")
+    .catch(() => console.warn("SW registration failed"));
+}
 
-function awardXPForCustomAction(actionType){
-    switch(actionType){
-        case 'workout_complete': addXP(50); break;
-        case 'meal_logged': addXP(15); break;
-        case 'quiz_complete': addXP(100); break;
-        default: addXP(10);
-    }
-    updateGamification();
-                                                  }
-                                      }
+/* ===================================================
+   SAFE GUARDS & DEFENSIVE CHECKS
+=================================================== */
+
+function safeGet(path, fallback = null) {
+  try {
+    return path();
+  } catch {
+    return fallback;
+  }
+}
+
+/* ===================================================
+   FINAL INIT PIPELINE
+=================================================== */
+
+function initV9() {
+  evaluateTier();
+  evaluateAchievements();
+  evaluateBadges();
+  evaluateProgression();
+  updateGamificationUI();
+  renderDailyLog();
+}
+
+document.addEventListener("DOMContentLoaded", initV9);
