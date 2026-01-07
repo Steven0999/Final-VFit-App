@@ -1,224 +1,265 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>FitTrack Pro V9</title>
 
-<link rel="stylesheet" href="style.css" />
-<script src="https://unpkg.com/lucide/dist/lucide.js"></script>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- HTML5 QR Scanner -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
 
+<!-- Custom CSS -->
+<link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="pb-28 bg-slate-50 font-sans">
 
-<!-- ================= HEADER ================= -->
-<header class="app-header">
-  <h1>FitTrack Pro V9</h1>
-
-  <nav class="nav-bar">
-    <button class="nav-item" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
-    <button class="nav-item" data-tab="workout-setup" onclick="switchTab('workout-setup')">Workout</button>
-    <button class="nav-item" data-tab="history" onclick="switchTab('history')">History</button>
-    <button class="nav-item" data-tab="nutrition" onclick="switchTab('nutrition')">Nutrition</button>
-    <button class="nav-item" data-tab="metrics" onclick="switchTab('metrics')">Metrics</button>
-    <button class="nav-item" data-tab="achievements" onclick="switchTab('achievements')">Gamification</button>
-  </nav>
+<!-- HEADER -->
+<header class="bg-white/70 backdrop-blur-md border-b border-slate-100 px-6 py-5 sticky top-0 z-40 flex justify-between items-center">
+    <div>
+        <h1 class="text-xl font-extrabold tracking-tight text-orange-400">Vaughan<span class="text-slate-600">Fitness</span></h1>
+        <div class="flex items-center gap-2 mt-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <p id="status-date" class="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Loading...</p>
+        </div>
+    </div>
+    <div class="flex items-center gap-2">
+        <button onclick="switchTab('settings')" class="w-10 h-10 flex items-center justify-center bg-slate-50 rounded-2xl hover:bg-slate-100 transition-colors">
+            <i data-lucide="settings" class="w-5 h-5 text-slate-600"></i>
+        </button>
+    </div>
 </header>
 
-<!-- ================= DASHBOARD ================= -->
-<section id="dashboard" class="tab-content active">
-  <h2>Dashboard</h2>
+<main class="max-w-xl mx-auto p-4 space-y-6">
 
-  <div class="stats-grid">
-    <div>Calories <span id="dash-calories">0</span></div>
-    <div>Protein <span id="dash-protein">0g</span></div>
-    <div>Carbs <span id="dash-carbs">0g</span></div>
-    <div>Fat <span id="dash-fat">0g</span></div>
-    <div>Water <span id="water-count">0L</span></div>
-    <div>Level <span id="user-level">1</span></div>
-    <div>XP <span id="user-xp">0</span></div>
-    <div>Streak <span id="user-streak">0</span> days</div>
-  </div>
-
-  <div class="dashboard-actions">
-    <button onclick="switchTab('workout-setup')">Start Workout</button>
-    <button id="ai-workout-btn" onclick="generateAIWorkout()">AI Workout</button>
-    <button onclick="openMealModal()">Build Meal</button>
-    <button onclick="openTutorial()">Tutorials</button>
-  </div>
-</section>
-
-<!-- ================= WORKOUT SETUP ================= -->
-<section id="workout-setup" class="tab-content hidden">
-  <h2>Workout Setup</h2>
-
-  <label>Date</label>
-  <input type="date" id="workout-date-input" />
-
-  <label>Focus</label>
-  <select id="workout-focus" onchange="toggleSpecificMuscleGrid()">
-    <option>Full Body</option>
-    <option>Upper Body</option>
-    <option>Lower Body/Legs</option>
-    <option>Specific Muscle</option>
-  </select>
-
-  <div id="muscle-selection-container" class="hidden">
-    <h4>Select Muscles</h4>
-    <div id="muscle-selection-grid"></div>
-  </div>
-
-  <label><input type="checkbox" id="add-core-check" /> Add Core</label>
-  <label><input type="checkbox" id="add-cardio-check" onchange="toggleCardioOptions()" /> Add Cardio</label>
-
-  <div id="cardio-options" class="hidden">
-    <select id="cardio-type">
-      <option>Run</option>
-      <option>Bike</option>
-    </select>
-    <select id="cardio-exercise">
-      <option>Treadmill</option>
-      <option>Bike</option>
-    </select>
-  </div>
-
-  <div class="env-selector">
-    <button id="env-tab-gym" onclick="setWorkoutEnv('gym')">Gym</button>
-    <button id="env-tab-home" onclick="setWorkoutEnv('home')">Home</button>
-  </div>
-
-  <button onclick="startManualWorkout()">Start Workout</button>
-</section>
-
-<!-- ================= ACTIVE WORKOUT ================= -->
-<section id="workout-active" class="tab-content hidden">
-  <h2>Active Workout: <span id="active-workout-title"></span></h2>
-  <div>Timer: <span id="workout-timer">00:00</span></div>
-
-  <div id="exercise-list"></div>
-  <div id="extra-active-section"></div>
-
-  <button onclick="saveWorkout()">Save Workout</button>
-  <button onclick="cancelWorkout()">Cancel</button>
-</section>
-
-<!-- ================= HISTORY ================= -->
-<section id="history" class="tab-content hidden">
-  <h2>History</h2>
-
-  <div class="tab-selector">
-    <button onclick="setHistoryTab('training')">Training</button>
-    <button onclick="setHistoryTab('nutrition')">Nutrition</button>
-  </div>
-
-  <div id="history-list"></div>
-</section>
-
-<!-- ================= NUTRITION ================= -->
-<section id="nutrition" class="tab-content hidden">
-
-  <div class="tab-selector">
-    <button id="nut-tab-log" onclick="setNutritionTab('log')">Log</button>
-    <button id="nut-tab-db" onclick="setNutritionTab('database')">Database</button>
-  </div>
-
-  <div id="nut-view-log">
-    <input type="text" placeholder="Search food…" oninput="handleFoodSearch(this.value)" />
-    <div id="food-results"></div>
-    <div id="daily-log-list"></div>
-
-    <div id="daily-totals-card" class="hidden">
-      <span id="total-day-cals">0</span>
-      <span id="total-day-prot">0</span>
-      <button onclick="archiveDailyNutrition()">Archive</button>
-    </div>
-  </div>
-
-  <div id="nut-view-db" class="hidden">
-    <div id="custom-db-list"></div>
-
-    <input id="form-name" placeholder="Food name" />
-    <input id="form-cals" type="number" placeholder="Calories" />
-    <input id="form-prot" type="number" placeholder="Protein" />
-
-    <button onclick="saveToDatabase()">Add Food</button>
-    <button onclick="startScanner('db')">Scan Barcode</button>
-  </div>
-
-</section>
-
-<!-- ================= METRICS ================= -->
-<section id="metrics" class="tab-content hidden">
-
-  <div class="tab-selector">
-    <button id="metrics-tab-checkin" onclick="setMetricsTab('checkin')">Check-in</button>
-    <button id="metrics-tab-logs" onclick="setMetricsTab('logs')">Logs</button>
-  </div>
-
-  <div id="metrics-view-checkin">
-    <input id="body-weight" type="number" placeholder="Weight kg" />
-    <input id="m-waist" type="number" placeholder="Waist cm" />
-
-    <div class="photo-upload">
-      <img id="img-front" class="hidden" />
-      <img id="img-side" class="hidden" />
-      <img id="img-back" class="hidden" />
-
-      <button onclick="triggerPhoto('front')">Front</button>
-      <button onclick="triggerPhoto('side')">Side</button>
-      <button onclick="triggerPhoto('back')">Back</button>
-
-      <input id="photo-input" type="file" class="hidden" accept="image/*" />
+<!-- DASHBOARD -->
+<section id="dashboard" class="tab-content active space-y-6">
+    <div class="glass-card rounded-[2.5rem] p-8 flex flex-col items-center relative overflow-hidden">
+        <div class="relative w-48 h-48 flex items-center justify-center">
+            <svg class="w-full h-full">
+                <circle class="text-slate-100" stroke-width="12" stroke="currentColor" fill="transparent" r="85" cx="96" cy="96"/>
+                <circle id="calorie-progress" class="text-indigo-600 progress-ring-circle" stroke-width="12" stroke-dasharray="534" stroke-dashoffset="534" stroke-linecap="round" stroke="currentColor" fill="transparent" r="85" cx="96" cy="96"/>
+            </svg>
+            <div class="absolute text-center">
+                <div id="dash-calories" class="text-4xl font-black text-slate-900">0</div>
+                <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kcal Eaten</div>
+            </div>
+        </div>
+        <div class="grid grid-cols-3 w-full gap-4 mt-8 border-t border-slate-100 pt-6">
+            <div class="text-center">
+                <div id="dash-protein" class="font-bold text-slate-900">0g</div>
+                <div class="text-[9px] font-black uppercase text-slate-400">Protein</div>
+            </div>
+            <div class="text-center border-x border-slate-100">
+                <div id="dash-carbs" class="font-bold text-slate-900">0g</div>
+                <div class="text-[9px] font-black uppercase text-slate-400">Carbs</div>
+            </div>
+            <div class="text-center">
+                <div id="dash-fat" class="font-bold text-slate-900">0g</div>
+                <div class="text-[9px] font-black uppercase text-slate-400">Fats</div>
+            </div>
+        </div>
     </div>
 
-    <button onclick="saveMetrics()">Save Metrics</button>
-  </div>
-
-  <div id="metrics-view-logs"></div>
+    <div class="glass-card rounded-[2.5rem] p-6 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
+                <i data-lucide="droplet" class="text-blue-500"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-slate-800">Hydration</h4>
+                <p id="water-count" class="text-xs text-slate-500">0 / 2.5 Liters</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="updateWater(-250)" class="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:text-red-500 font-bold">-</button>
+            <button onclick="updateWater(250)" class="w-10 h-10 rounded-xl bg-blue-600 text-white font-bold">+</button>
+        </div>
+    </div>
 </section>
 
-<!-- ================= ACHIEVEMENTS ================= -->
-<section id="achievements" class="tab-content hidden">
-  <h2>Achievements</h2>
-  <div id="achievements-list"></div>
-  <div id="badges-list"></div>
+<!-- TRAINING -->
+<section id="training" class="tab-content space-y-6">
+    <div id="workout-setup" class="space-y-4">
+        <div class="glass-card p-6 rounded-[2.5rem] border border-slate-100 shadow-sm text-center">
+            <div class="flex bg-slate-100 p-1 rounded-2xl mb-6 mx-auto w-fit">
+                <button onclick="setWorkoutEnv('gym')" id="env-tab-gym" class="px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all bg-white text-indigo-600 shadow-sm">Gym</button>
+                <button onclick="setWorkoutEnv('home')" id="env-tab-home" class="px-6 py-2 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all text-slate-400">Home</button>
+            </div>
+            <select id="workout-focus" class="w-full p-4 bg-slate-50 rounded-2xl border-none font-bold mb-6 appearance-none text-center">
+                <option>Full Body</option>
+                <option>Upper Body (Push)</option>
+                <option>Upper Body (Pull)</option>
+                <option>Lower Body (Legs)</option>
+            </select>
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="startManualWorkout()" class="p-4 bg-slate-900 text-white rounded-[1.5rem] font-bold text-sm flex flex-col items-center gap-2">
+                    <i data-lucide="plus-circle"></i> Manual
+                </button>
+                <button onclick="generateAIWorkout()" class="p-4 bg-indigo-600 text-white rounded-[1.5rem] font-bold text-sm flex flex-col items-center gap-2">
+                    <i data-lucide="sparkles"></i> AI Suggest
+                </button>
+            </div>
+        </div>
+
+        <div id="workout-active" class="hidden glass-card rounded-[2.5rem] p-6 shadow-sm">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="active-workout-title" class="text-xl font-black text-slate-900">Workout</h3>
+                <button onclick="cancelWorkout()" class="text-slate-400 hover:text-red-500"><i data-lucide="x-circle"></i></button>
+            </div>
+            <div id="exercise-list" class="space-y-6 mb-6"></div>
+            <button onclick="addExerciseField()" class="w-full p-4 border-2 border-dashed border-slate-200 rounded-2xl text-slate-400 font-bold text-xs uppercase tracking-widest mb-4">+ Add Exercise</button>
+            <button onclick="saveWorkout()" class="w-full bg-slate-900 text-white p-5 rounded-[1.5rem] font-bold shadow-lg">Finish & Log Session</button>
+        </div>
+    </div>
 </section>
 
-<!-- ================= MODALS ================= -->
+<!-- NUTRITION -->
+<section id="nutrition" class="tab-content space-y-6">
+    <div class="flex bg-slate-100 p-1.5 rounded-2xl">
+        <button onclick="setNutritionTab('log')" id="nut-tab-log" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all bg-white text-indigo-600 shadow-sm">Diary</button>
+        <button onclick="setNutritionTab('database')" id="nut-tab-db" class="flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all text-slate-400">Inventory</button>
+    </div>
 
-<div id="meal-modal" class="modal hidden">
-  <h3>Meal Builder</h3>
-  <input id="meal-builder-name" placeholder="Meal name" />
-  <input id="meal-item-search" oninput="handleMealSearch(this.value)" placeholder="Search items" />
-  <div id="meal-search-results"></div>
-  <div id="meal-builder-list"></div>
-  <div id="meal-totals">
-    <span id="meal-builder-stats">0</span>
-    <button onclick="saveMealToInventory()">Save Meal</button>
-  </div>
-  <button onclick="closeMealModal()">Close</button>
+    <div id="nut-view-log" class="space-y-6">
+        <div class="relative">
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4"></i>
+            <input id="food-search" placeholder="Search your database..." class="w-full pl-12 pr-4 py-4 bg-white rounded-2xl border border-slate-100 shadow-sm focus:ring-2 ring-indigo-100 outline-none" oninput="handleFoodSearch(this.value)">
+            <div id="food-results" class="hidden absolute left-0 right-0 top-full mt-2 bg-white border border-slate-100 rounded-2xl overflow-hidden z-50 shadow-2xl max-h-64 overflow-y-auto"></div>
+        </div>
+        <div id="daily-log-list" class="space-y-3"></div>
+    </div>
+
+    <div id="nut-view-db" class="hidden space-y-6">
+        <div id="custom-db-list" class="divide-y divide-slate-50 max-h-80 overflow-y-auto"></div>
+    </div>
+</section>
+
+<!-- BODY METRICS -->
+<section id="metrics" class="tab-content space-y-6">
+    <div class="glass-card p-8 rounded-[3rem] space-y-8">
+        <div>
+            <span class="text-[10px] font-black uppercase text-slate-400 block mb-1">Body Weight</span>
+            <input id="body-weight" type="number" step="0.1" placeholder="00.0" class="w-full bg-slate-50 p-4 rounded-xl font-bold text-slate-900 outline-none">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-[9px] font-black uppercase text-slate-400">Shoulders</label>
+                <input id="m-shoulders" type="number" class="w-full bg-slate-50 p-4 rounded-xl font-bold text-slate-900 outline-none" placeholder="00">
+            </div>
+            <div>
+                <label class="text-[9px] font-black uppercase text-slate-400">Chest</label>
+                <input id="m-chest" type="number" class="w-full bg-slate-50 p-4 rounded-xl font-bold text-slate-900 outline-none" placeholder="00">
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div>
+                <label class="text-[9px] font-black uppercase text-slate-400">Waist</label>
+                <input id="m-waist" type="number" class="w-full bg-slate-50 p-4 rounded-xl font-bold text-slate-900 outline-none" placeholder="00">
+            </div>
+            <div>
+                <label class="text-[9px] font-black uppercase text-slate-400">Glutes</label>
+                <input id="m-glutes" type="number" class="w-full bg-slate-50 p-4 rounded-xl font-bold text-slate-900 outline-none" placeholder="00">
+            </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+            <div class="photo-slot" onclick="triggerPhoto('front')"><input type="file" id="file-front" accept="image/*" class="hidden" onchange="handlePhoto(this,'front')"><i data-lucide="camera" class="text-slate-300"></i></div>
+            <div class="photo-slot" onclick="triggerPhoto('side')"><input type="file" id="file-side" accept="image/*" class="hidden" onchange="handlePhoto(this,'side')"><i data-lucide="camera" class="text-slate-300"></i></div>
+            <div class="photo-slot" onclick="triggerPhoto('back')"><input type="file" id="file-back" accept="image/*" class="hidden" onchange="handlePhoto(this,'back')"><i data-lucide="camera" class="text-slate-300"></i></div>
+        </div>
+        <button onclick="saveMetrics()" class="w-full bg-rose-500 text-white p-5 rounded-2xl font-black uppercase text-xs tracking-widest shadow-xl shadow-rose-100 mt-4">Log Check-in</button>
+    </div>
+</section>
+
+<!-- SETTINGS -->
+<section id="settings" class="tab-content space-y-6">
+    <div class="glass-card p-6 rounded-[2.5rem] space-y-4">
+        <h4 class="text-[11px] font-black uppercase text-slate-400 tracking-wider">Calorie & Equipment Goals</h4>
+        <div class="flex flex-col gap-2">
+            <label class="font-black uppercase text-[9px] text-slate-400">Calorie Goal</label>
+            <input type="number" id="set-cal-goal" class="w-full bg-slate-50 p-4 rounded-xl font-bold text-indigo-600 outline-none" onchange="state.goals.calories = Number(this.value); saveState();">
+        </div>
+        <div class="flex flex-col gap-2 mt-4">
+            <h5 class="font-black uppercase text-[9px] text-slate-400">Equipment (Gym)</h5>
+            <div class="grid grid-cols-3 gap-2">
+                <label><input type="checkbox" onchange="updateEquipment('gym','barbell',this.checked)"> Barbell</label>
+                <label><input type="checkbox" onchange="updateEquipment('gym','dumbbell',this.checked)"> Dumbbell</label>
+                <label><input type="checkbox" onchange="updateEquipment('gym','kettlebell',this.checked)"> Kettlebell</label>
+                <label><input type="checkbox" onchange="updateEquipment('gym','cable',this.checked)"> Cable</label>
+                <label><input type="checkbox" onchange="updateEquipment('gym','machine',this.checked)"> Machine</label>
+                <label><input type="checkbox" onchange="updateEquipment('gym','bodyweight',this.checked)"> Bodyweight</label>
+            </div>
+        </div>
+        <div class="flex flex-col gap-2 mt-4">
+            <h5 class="font-black uppercase text-[9px] text-slate-400">Equipment (Home)</h5>
+            <div class="grid grid-cols-3 gap-2">
+                <label><input type="checkbox" onchange="updateEquipment('home','barbell',this.checked)"> Barbell</label>
+                <label><input type="checkbox" onchange="updateEquipment('home','dumbbell',this.checked)"> Dumbbell</label>
+                <label><input type="checkbox" onchange="updateEquipment('home','kettlebell',this.checked)"> Kettlebell</label>
+                <label><input type="checkbox" onchange="updateEquipment('home','cable',this.checked)"> Cable</label>
+                <label><input type="checkbox" onchange="updateEquipment('home','machine',this.checked)"> Machine</label>
+                <label><input type="checkbox" onchange="updateEquipment('home','bodyweight',this.checked)"> Bodyweight</label>
+            </div>
+        </div>
+    </div>
+    <button onclick="resetData()" class="w-full p-5 text-red-500 font-bold uppercase text-[10px] tracking-widest bg-red-50 rounded-2xl mt-4">Purge All Records</button>
+</section>
+
+<!-- HISTORY -->
+<section id="history" class="tab-content space-y-6">
+    <div class="flex bg-slate-100 p-1.5 rounded-2xl">
+        <button onclick="setHistoryTab('training')" id="hist-tab-train" class="flex-1 py-3 text-[10px] font-black uppercase rounded-xl transition-all bg-white text-indigo-600 shadow-sm">Training</button>
+        <button onclick="setHistoryTab('nutrition')" id="hist-tab-nut" class="flex-1 py-3 text-[10px] font-black uppercase rounded-xl transition-all text-slate-400">Food</button>
+        <button onclick="setHistoryTab('body')" id="hist-tab-body" class="flex-1 py-3 text-[10px] font-black uppercase rounded-xl transition-all text-slate-400">Body</button>
+    </div>
+    <div id="history-list" class="space-y-4 max-h-96 overflow-y-auto"></div>
+</section>
+
+</main>
+
+<!-- NAVIGATION -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-xl border-t border-slate-100 px-6 py-4 flex justify-between items-center z-50">
+    <button onclick="switchTab('dashboard')" data-tab="dashboard" class="nav-item text-indigo-600 flex flex-col items-center gap-1.5">
+        <div class="w-12 h-8 rounded-full flex items-center justify-center nav-bg bg-indigo-50"><i data-lucide="layout-grid" class="w-6 h-6"></i></div>
+        <span class="text-[9px] font-black uppercase tracking-tighter">Dash</span>
+    </button>
+    <button onclick="switchTab('training')" data-tab="training" class="nav-item text-slate-300 flex flex-col items-center gap-1.5">
+        <div class="w-12 h-8 rounded-full flex items-center justify-center nav-bg"><i data-lucide="dumbbell" class="w-6 h-6"></i></div>
+        <span class="text-[9px] font-black uppercase tracking-tighter">Train</span>
+    </button>
+    <button onclick="switchTab('nutrition')" data-tab="nutrition" class="nav-item text-slate-300 flex flex-col items-center gap-1.5">
+        <div class="w-12 h-8 rounded-full flex items-center justify-center nav-bg"><i data-lucide="apple" class="w-6 h-6"></i></div>
+        <span class="text-[9px] font-black uppercase tracking-tighter">Eat</span>
+    </button>
+    <button onclick="switchTab('history')" data-tab="history" class="nav-item text-slate-300 flex flex-col items-center gap-1.5">
+        <div class="w-12 h-8 rounded-full flex items-center justify-center nav-bg"><i data-lucide="calendar" class="w-6 h-6"></i></div>
+        <span class="text-[9px] font-black uppercase tracking-tighter">Logs</span>
+    </button>
+    <button onclick="switchTab('metrics')" data-tab="metrics" class="nav-item text-slate-300 flex flex-col items-center gap-1.5">
+        <div class="w-12 h-8 rounded-full flex items-center justify-center nav-bg"><i data-lucide="scale" class="w-6 h-6"></i></div>
+        <span class="text-[9px] font-black uppercase tracking-tighter">Body</span>
+    </button>
+</nav>
+
+<!-- GAMIFICATION / MODALS PLACEHOLDER -->
+<div id="modal-container" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-3xl p-6 max-w-md w-full space-y-4">
+        <h2 class="text-lg font-black text-slate-900">Level Up!</h2>
+        <p class="text-slate-500 text-sm">Congrats! You have earned XP and unlocked new features.</p>
+        <button onclick="closeModal()" class="w-full bg-indigo-600 text-white p-4 rounded-2xl font-bold">Continue</button>
+    </div>
 </div>
 
-<div id="tutorial-modal" class="modal hidden">
-  <h3>Tutorials</h3>
-  <div id="tutorial-list"></div>
-  <button onclick="closeTutorial()">Close</button>
-</div>
-
-<div id="portion-modal" class="modal hidden">
-  <h3>Portion</h3>
-  <span id="portion-item-name"></span>
-  <input id="portion-qty-input" type="number" value="1" />
-  <button onclick="confirmLogPortion()">Confirm</button>
-</div>
-
-<div id="scanner-container" class="modal hidden">
-  <div id="scanner-mount"></div>
-  <button onclick="stopScanner()">Close</button>
-</div>
-
-<!-- ================= SCRIPTS ================= -->
 <script src="script.js"></script>
+<script>
+  // Activate lucide icons
+  lucide.replace();
+  // Initialize default tab
+  switchTab('dashboard');
+</script>
 
 </body>
 </html>
